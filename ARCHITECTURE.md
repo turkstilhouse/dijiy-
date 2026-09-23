@@ -124,6 +124,9 @@ Her biri `supabase/tests/rls.test.ts` ile yerel Postgres'te (PGlite) test edilir
 Geliştirme araçları ve agent katmanı (VS Code, Claude, Codex, MCP):
 [`docs/architecture/vscode-agent-layer.md`](./docs/architecture/vscode-agent-layer.md).
 
+Araştırma → bilgi katmanı → kısa retrieval (tasarım):
+[`docs/architecture/knowledge-research-pipeline.md`](./docs/architecture/knowledge-research-pipeline.md).
+
 ## 8. Yol haritası
 
 - **Faz 0 (bu PR):** Next.js temeli, Supabase istemcileri, env/secret yapısı,
