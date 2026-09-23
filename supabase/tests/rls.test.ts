@@ -2,9 +2,13 @@
 /**
  * RLS tests for the draft migrations in supabase/migrations/.
  *
- * Runs against an in-memory Postgres (PGlite) seeded with a replica of the
- * production policies (fixtures/core_baseline.sql). Nothing here touches the
- * real Supabase project.
+ * Runs against a replica of the production policies (fixtures/core_baseline.sql)
+ * in one of two databases:
+ *   - default: in-memory Postgres (PGlite) with platform_stub.sql standing in
+ *     for Supabase's roles and auth schema;
+ *   - RLS_TEST_DATABASE_URL set: a real Postgres, e.g. the supabase/postgres
+ *     image in CI, using the platform's own roles and auth.uid().
+ * Nothing here touches the real Supabase project.
  *
  * "baseline" tests document the current production behaviour (the findings);
  * "after migrations" tests prove the drafts fix them without breaking
@@ -13,7 +17,7 @@
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { PGlite } from "@electric-sql/pglite";
-import { beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 const root = join(__dirname, "..");
 const baselineSql = readFileSync(
@@ -138,8 +142,78 @@ const seedSql = `
   insert into private.ai_comms_threads (id, organization_id) values ('${ID.thread}', '${ORG_A}');
 `;
 
+const fixture = (name: string) =>
+  readFileSync(join(root, "tests/fixtures", name), "utf8");
+const platformStubSql = fixture("platform_stub.sql");
+
+/** The subset of the PGlite API the tests use; also implemented over `pg`. */
+interface TestDb {
+  exec(sql: string): Promise<unknown>;
+  query<T = Record<string, unknown>>(
+    sql: string,
+    params?: unknown[],
+  ): Promise<{ rows: T[] }>;
+  close(): Promise<void>;
+}
+
+const externalUrl = process.env.RLS_TEST_DATABASE_URL;
+
+// resetExternal() drops tables. Refuse anything that looks like a hosted
+// Supabase database so this suite can never run against production.
+if (externalUrl && /supabase\.(co|com)\b/i.test(externalUrl)) {
+  throw new Error(
+    "RLS_TEST_DATABASE_URL points at a hosted Supabase database; use a throwaway local or CI container.",
+  );
+}
+
+async function connect(): Promise<TestDb> {
+  if (!externalUrl) return new PGlite();
+  const { Client } = await import("pg");
+  const client = new Client({ connectionString: externalUrl });
+  await client.connect();
+  return {
+    exec: (sql) => client.query(sql),
+    query: async <T>(sql: string, params?: unknown[]) => ({
+      rows: (await client.query(sql, params)).rows as T[],
+    }),
+    close: () => client.end(),
+  };
+}
+
+/**
+ * Removes everything the fixture, migrations and seed create, so a shared
+ * external database can be rebuilt for each suite. Platform objects (roles,
+ * the auth schema) are left alone.
+ */
+async function resetExternal(db: TestDb) {
+  const tables = [...baselineSql.matchAll(/create table public\.(\w+)/g)].map(
+    (m) => m[1],
+  );
+  await db.exec(`
+    drop schema if exists private cascade;
+    drop table if exists ${tables.map((t) => `public.${t}`).join(", ")} cascade;
+    drop function if exists public.is_org_member(uuid) cascade;
+    drop function if exists public.has_org_role(uuid, text[]) cascade;
+    drop function if exists public.approval_decider_roles(text) cascade;
+    drop function if exists public.guard_human_approval_update() cascade;
+  `);
+  const hasUsers = await db.query<{ ok: boolean }>(
+    "select to_regclass('auth.users') is not null as ok",
+  );
+  if (hasUsers.rows[0].ok) {
+    await db.query("delete from auth.users where id = any($1::uuid[])", [
+      Object.values(U),
+    ]);
+  }
+}
+
 async function createDb(withMigrations: boolean) {
-  const db = new PGlite();
+  const db = await connect();
+  if (externalUrl) await resetExternal(db);
+  const hasAuth = await db.query<{ ok: boolean }>(
+    "select to_regnamespace('auth') is not null as ok",
+  );
+  if (!hasAuth.rows[0].ok) await db.exec(platformStubSql);
   await db.exec(baselineSql);
   if (withMigrations) {
     for (const file of migrationFiles) {
@@ -150,7 +224,7 @@ async function createDb(withMigrations: boolean) {
   return db;
 }
 
-async function as(db: PGlite, who: Actor) {
+async function as(db: TestDb, who: Actor) {
   await db.exec("reset role");
   const sub = who === "anon" || who === "service_role" ? "" : U[who];
   await db.query("select set_config('request.jwt.claim.sub', $1, false)", [
@@ -175,7 +249,7 @@ function assertDenied(err: unknown) {
 }
 
 /** Rows visible/affected for `who`. A refused statement counts as 0 rows. */
-async function rows(db: PGlite, who: Actor, sql: string) {
+async function rows(db: TestDb, who: Actor, sql: string) {
   await db.exec("savepoint probe");
   await as(db, who);
   try {
@@ -190,7 +264,7 @@ async function rows(db: PGlite, who: Actor, sql: string) {
 }
 
 /** Whether the statement succeeds for `who` (RLS WITH CHECK / grants / triggers). */
-async function succeeds(db: PGlite, who: Actor, sql: string) {
+async function succeeds(db: TestDb, who: Actor, sql: string) {
   await db.exec("savepoint probe");
   await as(db, who);
   try {
@@ -208,7 +282,7 @@ async function succeeds(db: PGlite, who: Actor, sql: string) {
  * Every test runs inside a transaction that is rolled back, so writes made by
  * one assertion never leak into another.
  */
-function tx(db: () => PGlite, fn: () => Promise<void>) {
+function tx(db: () => TestDb, fn: () => Promise<void>) {
   return async () => {
     await db().exec("begin");
     try {
@@ -220,11 +294,12 @@ function tx(db: () => PGlite, fn: () => Promise<void>) {
 }
 
 describe("baseline (production today) — reproduces the findings", () => {
-  let db: PGlite;
+  let db: TestDb;
   const get = () => db;
   beforeAll(async () => {
     db = await createDb(false);
   });
+  afterAll(() => db?.close());
 
   it(
     "F0: private tables have RLS disabled but no client grants",
@@ -316,11 +391,12 @@ describe("baseline (production today) — reproduces the findings", () => {
 });
 
 describe("after draft migrations", () => {
-  let db: PGlite;
+  let db: TestDb;
   const get = () => db;
   beforeAll(async () => {
     db = await createDb(true);
   });
+  afterAll(() => db?.close());
 
   describe("private.ai_comms_* (F0)", () => {
     it(

@@ -10,11 +10,12 @@ Yöntem: Production üzerinde **yalnızca salt okunur** katalog sorguları
 
 ## Doğrulama
 
-| Katman                                                        | Ne kanıtlar                                                                                                                                                                            | Sonuç                                 |
-| ------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- |
-| `supabase/tests/rls.test.ts` (PGlite, bellek içi Postgres 18) | Production politikalarının birebir kopyası üzerinde her bulgu **önce yeniden üretilir**, sonra migration'larla **kapandığı** ve meşru erişimin korunduğu gösterilir                    | 42/42 geçti                           |
-| `supabase/tests/preflight.sql` (production'da salt okunur)    | Migration'ların dokunduğu 39 politikanın ve kullandığı tüm sütunların production'da var olduğunu, yeni nesnelerin çakışmadığını ve ele alınmayan yazma politikası kalmadığını doğrular | **0 sorun** (23.09.2026)              |
-| Supabase development branch                                   | Gerçek Supabase ortamında (Postgres 17, gerçek `auth` şeması) uygulama                                                                                                                 | **Bekliyor** (ücretli; aşağıya bakın) |
+| Katman                                                                                           | Ne kanıtlar                                                                                                                                                                            | Sonuç                                 |
+| ------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- |
+| `supabase/tests/rls.test.ts` (PGlite, bellek içi Postgres 18)                                    | Production politikalarının birebir kopyası üzerinde her bulgu **önce yeniden üretilir**, sonra migration'larla **kapandığı** ve meşru erişimin korunduğu gösterilir                    | 42/42 geçti                           |
+| `supabase/tests/preflight.sql` (production'da salt okunur)                                       | Migration'ların dokunduğu 39 politikanın ve kullandığı tüm sütunların production'da var olduğunu, yeni nesnelerin çakışmadığını ve ele alınmayan yazma politikası kalmadığını doğrular | **0 sorun** (23.09.2026)              |
+| CI işi `rls-supabase` (GitHub Actions, `supabase/postgres:17.6.1.166`, production ile aynı imaj) | Aynı 42 test gerçek Postgres 17'de, Supabase'in kendi `anon`/`authenticated`/`service_role` rolleri ve `auth.uid()` ile çalışır. Ücretsiz; her PR'da tekrarlanır                       | PR #1 CI sonucuna bakın               |
+| Supabase development branch                                                                      | Gerçek Supabase ortamında (Postgres 17, gerçek `auth` şeması) uygulama                                                                                                                 | **Bekliyor** (ücretli; aşağıya bakın) |
 
 Testler yalnızca veritabanının gerçekten reddettiği durumları (`42501`
 yetki/RLS, `23514` kontrol/trigger) "engellendi" sayar. Diğer hatalar (ör. test
@@ -111,7 +112,12 @@ Branch oluşturulmadı. Onay sonrası izlenecek adımlar:
 6. Sonuçlar PR'a eklenir, branch silinir (maliyet durur).
 7. Production'a uygulama **ayrı bir kurucu onayı** gerektirir.
 
-Ücretsiz alternatifler (daha düşük sadakat):
+Ücretsiz alternatifler:
+
+- **CI'da gerçek Supabase imajı (uygulandı):** `rls-supabase` işi production ile
+  aynı Postgres imajında RLS testlerini çalıştırır. Kapsamadığı tek şey,
+  production'ın 13 migration'ının tam şemasıdır (fixture minimaldir); bu fark,
+  production'da salt okunur çalışan `preflight.sql` ile kapatılır.
 
 - **Supabase CLI ile yerel stack** (Docker, kurucu veya geliştirici makinesinde): 0 $.
   Production migration geçmişinin depoya alınması gerekir. Bu oturumda bu işlem,

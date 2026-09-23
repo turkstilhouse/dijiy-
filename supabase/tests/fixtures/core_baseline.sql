@@ -5,21 +5,10 @@
 -- production `pg_policies` / `pg_proc` / `pg_constraint`. Tables keep only the
 -- columns those policies (and the draft migrations) reference.
 --
--- This file is ONLY for local tests (PGlite). Never run it against production.
-
--- Supabase platform roles ------------------------------------------------------
-create role anon nologin noinherit;
-create role authenticated nologin noinherit;
-create role service_role nologin noinherit bypassrls;
-
--- auth schema stub: auth.uid() reads the JWT subject like Supabase does -------
-create schema auth;
-create table auth.users (id uuid primary key);
-create function auth.uid() returns uuid
-  language sql stable
-  as $$ select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid $$;
-grant usage on schema auth to anon, authenticated, service_role;
-grant execute on function auth.uid() to anon, authenticated, service_role;
+-- Requires the Supabase platform roles and auth schema: either the real
+-- supabase/postgres image or platform_stub.sql (PGlite).
+--
+-- ONLY for test databases. Never run it against production.
 
 grant usage on schema public to anon, authenticated, service_role;
 

@@ -17,6 +17,23 @@ doğrular. Production'a hiçbir bağlantı kurmaz.
 pnpm vitest run supabase
 ```
 
+Varsayılan olarak bellek içi PGlite kullanılır (`fixtures/platform_stub.sql`
+Supabase rollerini ve `auth.uid()`'yi taklit eder). Production ile aynı Supabase
+Postgres imajında çalıştırmak için (ücretsiz; CI'daki `rls-supabase` işi de
+bunu yapar):
+
+```bash
+docker run --rm -d --name dijiy-rls -p 54322:5432 \
+  -e POSTGRES_PASSWORD=postgres supabase/postgres:17.6.1.166
+RLS_TEST_DATABASE_URL=postgresql://postgres:postgres@localhost:54322/postgres \
+  pnpm vitest run supabase
+docker rm -f dijiy-rls
+```
+
+Harici veritabanında test paketi kendi tablolarını silip yeniden kurar. Bu
+yüzden `supabase.co` / `supabase.com` adreslerini reddeder; yalnızca atılabilir
+bir konteyner kullanın.
+
 Hedef veritabanında (production veya development branch) migration öncesi
 salt okunur ön kontrol:
 
