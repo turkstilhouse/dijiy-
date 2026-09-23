@@ -114,10 +114,15 @@ Taslak migration'lar (`supabase/migrations/`, **production'a uygulanmadı**):
 | Dosya                                                  | Konu                                               |
 | ------------------------------------------------------ | -------------------------------------------------- |
 | `20260923150000_private_ai_comms_enable_rls.sql`       | F0: `private.ai_comms_*` RLS                       |
-| `20260923150100_harden_legacy_org_access_policies.sql` | F1–F4: aktif üyelik + rol sınırları                |
+| `20260923150100_harden_legacy_org_access_policies.sql` | F1–F4: aktif üyelik, rol sınırları, onay modeli    |
 | `20260923150200_restrict_global_row_writes.sql`        | F5: global satırlara yalnızca `service_role` yazar |
+| `20260923150300_enforce_viewer_read_only.sql`          | F6: viewer salt okunur, defterler append-only      |
 
 Her biri `supabase/tests/rls.test.ts` ile yerel Postgres'te (PGlite) test edilir.
+`supabase/tests/preflight.sql` hedef veritabanında salt okunur ön kontrol yapar.
+
+Geliştirme araçları ve agent katmanı (VS Code, Claude, Codex, MCP):
+[`docs/architecture/vscode-agent-layer.md`](./docs/architecture/vscode-agent-layer.md).
 
 ## 8. Yol haritası
 

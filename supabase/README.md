@@ -17,5 +17,12 @@ doğrular. Production'a hiçbir bağlantı kurmaz.
 pnpm vitest run supabase
 ```
 
+Hedef veritabanında (production veya development branch) migration öncesi
+salt okunur ön kontrol:
+
+```sql
+-- supabase/tests/preflight.sql içeriğini SQL editöründe çalıştırın; 0 satır beklenir.
+```
+
 Bir migration taslağı eklerken fixture'ı gerektiği kadar genişletin ve hem
 "bugünkü davranış" hem "migration sonrası" testlerini yazın.

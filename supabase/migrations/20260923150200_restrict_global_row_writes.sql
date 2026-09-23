@@ -8,8 +8,8 @@
 -- and documents, and their child rows.
 --
 -- New rule: global rows stay readable by every authenticated user, but only
--- service_role (trusted server jobs) may write them. Org-scoped rows keep
--- their current semantics (any active member may write).
+-- service_role (trusted server jobs) may write them. Org-scoped rows are
+-- written by active non-viewer members (ARAS: viewers are read-only).
 
 -- experts / knowledge_sources / knowledge_documents -------------------------------
 do $$
@@ -24,22 +24,22 @@ begin
     $p$, t);
     execute format($p$
       create policy %1$s_org_insert on public.%1$I for insert to authenticated
-        with check (organization_id is not null and (select public.is_org_member(organization_id)))
+        with check (organization_id is not null and (select public.has_org_role(organization_id, array['owner','admin','manager','member'])))
     $p$, t);
     execute format($p$
       create policy %1$s_org_update on public.%1$I for update to authenticated
-        using (organization_id is not null and (select public.is_org_member(organization_id)))
-        with check (organization_id is not null and (select public.is_org_member(organization_id)))
+        using (organization_id is not null and (select public.has_org_role(organization_id, array['owner','admin','manager','member'])))
+        with check (organization_id is not null and (select public.has_org_role(organization_id, array['owner','admin','manager','member'])))
     $p$, t);
     execute format($p$
       create policy %1$s_org_delete on public.%1$I for delete to authenticated
-        using (organization_id is not null and (select public.is_org_member(organization_id)))
+        using (organization_id is not null and (select public.has_org_role(organization_id, array['owner','admin','manager','member'])))
     $p$, t);
   end loop;
 end $$;
 
 -- Child tables: readable when the parent is visible; writable only when the
--- parent belongs to an organization the caller is an active member of.
+-- parent belongs to an organization where the caller is an active non-viewer.
 
 -- expert_capabilities
 drop policy if exists expert_capabilities_access on public.expert_capabilities;
@@ -53,11 +53,11 @@ create policy expert_capabilities_org_write on public.expert_capabilities
   using (exists (select 1 from public.experts e
     where e.id = expert_capabilities.expert_id
       and e.organization_id is not null
-      and (select public.is_org_member(e.organization_id))))
+      and (select public.has_org_role(e.organization_id, array['owner','admin','manager','member']))))
   with check (exists (select 1 from public.experts e
     where e.id = expert_capabilities.expert_id
       and e.organization_id is not null
-      and (select public.is_org_member(e.organization_id))));
+      and (select public.has_org_role(e.organization_id, array['owner','admin','manager','member']))));
 
 -- expert_evaluations (keeps existing expert_evaluations_read SELECT policy)
 drop policy if exists expert_evaluations_access on public.expert_evaluations;
@@ -66,11 +66,11 @@ create policy expert_evaluations_org_write on public.expert_evaluations
   using (exists (select 1 from public.experts e
     where e.id = expert_evaluations.expert_id
       and e.organization_id is not null
-      and (select public.is_org_member(e.organization_id))))
+      and (select public.has_org_role(e.organization_id, array['owner','admin','manager','member']))))
   with check (exists (select 1 from public.experts e
     where e.id = expert_evaluations.expert_id
       and e.organization_id is not null
-      and (select public.is_org_member(e.organization_id))));
+      and (select public.has_org_role(e.organization_id, array['owner','admin','manager','member']))));
 
 -- knowledge_chunks
 drop policy if exists document_chunks_access on public.knowledge_chunks;
@@ -84,8 +84,8 @@ create policy knowledge_chunks_org_write on public.knowledge_chunks
   using (exists (select 1 from public.knowledge_documents d
     where d.id = knowledge_chunks.document_id
       and d.organization_id is not null
-      and (select public.is_org_member(d.organization_id))))
+      and (select public.has_org_role(d.organization_id, array['owner','admin','manager','member']))))
   with check (exists (select 1 from public.knowledge_documents d
     where d.id = knowledge_chunks.document_id
       and d.organization_id is not null
-      and (select public.is_org_member(d.organization_id))));
+      and (select public.has_org_role(d.organization_id, array['owner','admin','manager','member']))));

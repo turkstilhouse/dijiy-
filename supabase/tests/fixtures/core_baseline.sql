@@ -115,9 +115,14 @@ create table public.human_approval_requests (
   organization_id uuid not null references public.organizations(id),
   approval_type text not null default 'x',
   reason text not null default 'x',
-  status text not null default 'pending',
+  payload jsonb not null default '{}'::jsonb,
+  workflow_run_id uuid references public.workflow_runs(id) on delete cascade,
+  task_id uuid,
+  status text not null default 'pending'
+    check (status = any (array['pending','approved','rejected','expired'])),
   decided_by uuid,
-  decided_at timestamptz
+  decided_at timestamptz,
+  created_at timestamptz not null default now()
 );
 
 do $$
@@ -257,6 +262,143 @@ create policy document_chunks_access on public.knowledge_chunks for all to authe
     and ((d.organization_id is null) or (select is_org_member(d.organization_id) as is_org_member)))))
   with check (exists (select 1 from knowledge_documents d where ((d.id = knowledge_chunks.document_id)
     and ((d.organization_id is null) or (select is_org_member(d.organization_id) as is_org_member)))));
+
+-- Business tables with `org_members_access` FOR ALL (viewer can write today) ---------
+create table public.projects (
+  id uuid primary key default gen_random_uuid(),
+  organization_id uuid references public.organizations(id),
+  name text not null default 'x'
+);
+create table public.routing_rules (
+  id uuid primary key default gen_random_uuid(),
+  organization_id uuid references public.organizations(id),
+  name text not null default 'x'
+);
+create table public.customers (
+  id uuid primary key default gen_random_uuid(),
+  organization_id uuid references public.organizations(id),
+  name text not null default 'x'
+);
+create table public.suppliers (
+  id uuid primary key default gen_random_uuid(),
+  organization_id uuid references public.organizations(id),
+  name text not null default 'x'
+);
+create table public.orders (
+  id uuid primary key default gen_random_uuid(),
+  organization_id uuid references public.organizations(id),
+  status text not null default 'draft'
+);
+create table public.order_items (
+  id uuid primary key default gen_random_uuid(),
+  order_id uuid not null references public.orders(id),
+  quantity numeric not null default 1
+);
+create table public.production_orders (
+  id uuid primary key default gen_random_uuid(),
+  organization_id uuid references public.organizations(id),
+  status text not null default 'planned'
+);
+create table public.tasks (
+  id uuid primary key default gen_random_uuid(),
+  organization_id uuid references public.organizations(id),
+  title text not null default 'x'
+);
+create table public.task_runs (
+  id uuid primary key default gen_random_uuid(),
+  task_id uuid not null references public.tasks(id),
+  status text not null default 'queued'
+);
+create table public.evaluations (
+  id uuid primary key default gen_random_uuid(),
+  task_id uuid not null references public.tasks(id),
+  score numeric
+);
+create table public.decisions (
+  id uuid primary key default gen_random_uuid(),
+  organization_id uuid references public.organizations(id),
+  title text not null default 'x'
+);
+create table public.predictions (
+  id uuid primary key default gen_random_uuid(),
+  organization_id uuid references public.organizations(id),
+  subject text not null default 'x'
+);
+create table public.actual_outcomes (
+  id uuid primary key default gen_random_uuid(),
+  prediction_id uuid references public.predictions(id),
+  outcome text not null default 'x'
+);
+create table public.audit_events (
+  id uuid primary key default gen_random_uuid(),
+  organization_id uuid references public.organizations(id),
+  event_type text not null default 'x'
+);
+create table public.cost_events (
+  id uuid primary key default gen_random_uuid(),
+  organization_id uuid references public.organizations(id),
+  amount numeric not null default 0
+);
+create table public.agent_assignments (
+  id uuid primary key default gen_random_uuid(),
+  organization_id uuid not null references public.organizations(id),
+  agent_key text not null default 'x'
+);
+create table public.orchestration_runs (
+  id uuid primary key default gen_random_uuid(),
+  organization_id uuid not null references public.organizations(id),
+  status text not null default 'queued'
+);
+
+do $$
+declare t text;
+begin
+  foreach t in array array['projects','routing_rules','customers','suppliers',
+    'orders','production_orders','tasks','decisions','predictions',
+    'audit_events','cost_events']
+  loop
+    execute format($f$
+      create policy org_members_access on public.%1$I for all to authenticated
+      using ((select is_org_member(%1$I.organization_id) as is_org_member))
+      with check ((select is_org_member(%1$I.organization_id) as is_org_member))
+    $f$, t);
+  end loop;
+end $$;
+
+create policy order_items_via_order on public.order_items for all to authenticated
+  using (exists (select 1 from orders o where ((o.id = order_items.order_id)
+    and (select is_org_member(o.organization_id) as is_org_member))))
+  with check (exists (select 1 from orders o where ((o.id = order_items.order_id)
+    and (select is_org_member(o.organization_id) as is_org_member))));
+create policy task_runs_via_task on public.task_runs for all to authenticated
+  using (exists (select 1 from tasks t where ((t.id = task_runs.task_id)
+    and (select is_org_member(t.organization_id) as is_org_member))))
+  with check (exists (select 1 from tasks t where ((t.id = task_runs.task_id)
+    and (select is_org_member(t.organization_id) as is_org_member))));
+create policy evaluations_via_task on public.evaluations for all to authenticated
+  using (exists (select 1 from tasks t where ((t.id = evaluations.task_id)
+    and (select is_org_member(t.organization_id) as is_org_member))))
+  with check (exists (select 1 from tasks t where ((t.id = evaluations.task_id)
+    and (select is_org_member(t.organization_id) as is_org_member))));
+create policy predictions_outcomes_via_prediction on public.actual_outcomes for all to authenticated
+  using (exists (select 1 from predictions p where ((p.id = actual_outcomes.prediction_id)
+    and ((p.organization_id is null) or (select is_org_member(p.organization_id) as is_org_member)))))
+  with check (exists (select 1 from predictions p where ((p.id = actual_outcomes.prediction_id)
+    and ((p.organization_id is null) or (select is_org_member(p.organization_id) as is_org_member)))));
+create policy agent_assignments_member_all on public.agent_assignments for all to public
+  using (exists (select 1 from workspace_members wm
+    where ((wm.organization_id = agent_assignments.organization_id)
+      and (wm.user_id = auth.uid()) and (wm.status = 'active'::text))))
+  with check (exists (select 1 from workspace_members wm
+    where ((wm.organization_id = agent_assignments.organization_id)
+      and (wm.user_id = auth.uid()) and (wm.status = 'active'::text))));
+create policy orchestration_runs_member_all on public.orchestration_runs for all to public
+  using (exists (select 1 from workspace_members wm
+    where ((wm.organization_id = orchestration_runs.organization_id)
+      and (wm.user_id = auth.uid()) and (wm.status = 'active'::text))))
+  with check (exists (select 1 from workspace_members wm
+    where ((wm.organization_id = orchestration_runs.organization_id)
+      and (wm.user_id = auth.uid()) and (wm.status = 'active'::text))));
 
 -- RLS on + Supabase default grants for every public table ----------------------------
 do $$

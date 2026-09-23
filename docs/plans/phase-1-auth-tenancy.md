@@ -1,7 +1,7 @@
 # Faz 1 — Auth, Üyelik ve Kiracı Yetkilendirmesi (Teknik Plan)
 
 Durum: **Plan / taslak.** Kod ve veritabanı değişikliği içermez.
-Önkoşul: `docs/security/rls-audit-2026-09.md` içindeki F1, F2, F3 ve F5
+Önkoşul: `docs/security/rls-audit-2026-09.md` içindeki F1, F2, F3, F5 ve F6
 migration'larının onaylanıp uygulanması. Auth, bunlar kapanmadan açılmaz.
 
 ## 1. Hedefler
