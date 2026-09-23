@@ -17,18 +17,4 @@ Read `ARCHITECTURE.md` before structural changes. Summary of hard rules:
   consistency with the Supabase canonical model; Fatma Gül has final say on
   irreversible, financial, legal or credential actions.
 
-## Reporting standard (every status report to Fatma Gül / ARAS)
-
-Start each report with this block, in Turkish:
-
-| Alan             | İçerik                                                                                               |
-| ---------------- | ---------------------------------------------------------------------------------------------------- |
-| AI               | Agent name and role (e.g. KAYRA — Claude)                                                            |
-| Model            | The model actually serving the session, read from the session metadata at report time; never guessed |
-| Tarih / saat     | Türkiye saati (Europe/Istanbul, UTC+3), `GG.AA.YYYY SS:DD`                                           |
-| Görev            | What was asked                                                                                       |
-| Durum            | Tamamlandı / Devam ediyor / Engellendi / Onay bekliyor                                               |
-| İlerleme         | Task progress and overall Dijiy progress                                                             |
-| İnsan müdahalesi | Exactly which approvals, payments or actions are needed from a human, or "Yok"                       |
-
-Then separate what was actually done from what is only a draft or proposal.
+Token & Context Economy and the report format are in `AGENTS.md` and apply here.
