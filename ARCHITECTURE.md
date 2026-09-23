@@ -94,6 +94,8 @@ aktif üyesi olduğu organizasyonun verisini görür.
 
 ## 6. Deploy (Vercel) — plan
 
+Ayrıntılı kurulum: [`docs/deploy/vercel.md`](./docs/deploy/vercel.md). `vercel.json` depoda hazır.
+
 Dijiy için **yeni ve ayrı** bir Vercel projesi oluşturulacak (`lumina` değil):
 
 - Framework: Next.js · Root: `/` · Install: `pnpm install` · Build: `pnpm build`
@@ -102,27 +104,28 @@ Dijiy için **yeni ve ayrı** bir Vercel projesi oluşturulacak (`lumina` değil
   `NEXT_PUBLIC_SITE_URL`, `DIJIY_ORGANIZATION_ID`, `DIJIY_PROJECT_ID`.
 - Deploy sonrası doğrulama: `GET /api/health` → `supabase.status = "ok"`.
 
-## 7. Faz 0 denetim notları (ARAS için)
+## 7. Güvenlik denetimi ve taslak migration'lar
 
-CORE salt-okunur incelendi (23.09.2026); hiçbir değişiklik yapılmadı.
+CORE salt-okunur denetlendi. Bulgular, yetki matrisi ve açık sorular:
+[`docs/security/rls-audit-2026-09.md`](./docs/security/rls-audit-2026-09.md).
 
-- 13 migration mevcut; tüm `public.*` tablolarında RLS açık.
-- `private.ai_comms_threads` / `private.ai_comms_messages` tablolarında RLS kapalı.
-  `private` şeması API'ye açık değil ve `anon`/`authenticated` rollerinin yetkisi
-  yok, dolayısıyla şu an dışarıdan erişilemez. Yine de savunma derinliği için RLS
-  açılması önerilir (karar ARAS/kurucuda).
-- Bazı `org_access` politikaları `workspace_members.status = 'active'` koşulunu
-  kontrol etmiyor (ör. `integrations`, `artifacts`, `workflow_runs`); yeni
-  politikalar `status = 'active'` kontrol ediyor. Tutarlılık için gözden geçirilmeli.
-- `workspace_members` boş: kullanıcı üyeliği tanımlanana kadar kimliği doğrulanmış
-  kullanıcılar da iş verisi göremez. Auth akışı Faz 1'in ilk işi.
+Taslak migration'lar (`supabase/migrations/`, **production'a uygulanmadı**):
+
+| Dosya                                                  | Konu                                               |
+| ------------------------------------------------------ | -------------------------------------------------- |
+| `20260923150000_private_ai_comms_enable_rls.sql`       | F0: `private.ai_comms_*` RLS                       |
+| `20260923150100_harden_legacy_org_access_policies.sql` | F1–F4: aktif üyelik + rol sınırları                |
+| `20260923150200_restrict_global_row_writes.sql`        | F5: global satırlara yalnızca `service_role` yazar |
+
+Her biri `supabase/tests/rls.test.ts` ile yerel Postgres'te (PGlite) test edilir.
 
 ## 8. Yol haritası
 
 - **Faz 0 (bu PR):** Next.js temeli, Supabase istemcileri, env/secret yapısı,
   health endpoint, test + CI, dokümantasyon.
-- **Faz 1:** Auth (e-posta/OAuth), `workspace_members` onboarding, korumalı rotalar,
-  Dijiy Vercel projesi ve ilk preview deploy.
+- **Faz 1:** RLS taslaklarının onayı → Auth + tenant yetkilendirmesi
+  ([plan](./docs/plans/phase-1-auth-tenancy.md)), Dijiy Vercel projesi
+  ([kurulum](./docs/deploy/vercel.md)) ve ilk preview deploy.
 - **Faz 2:** Tasarım sistemi + "Kumaştan Sisteme" immersive ana sayfa
   (Scroll Cinema → Interactive World → Real Data → Real Module).
 - **Faz 3:** Alan modülleri (kumaş, katalog, üretim, sipariş) CORE tablolarına bağlı.
