@@ -10,3 +10,7 @@ export * from "./control-plane";
 export * from "./invariants";
 export * from "./execution-engine";
 export * from "./audit";
+export * from "./runtime-providers";
+export * from "./n8n-provider";
+export * from "./relevance-ai-provider";
+export * from "./supabase-persistence";
