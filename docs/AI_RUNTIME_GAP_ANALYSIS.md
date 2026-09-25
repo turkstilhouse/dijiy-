@@ -90,3 +90,11 @@ Phase 5: retire duplicate generic runtime code only after parity evidence exists
 - Provider outage must not corrupt canonical DİJİY state.
 - Every external execution needs task/execution correlation and idempotency.
 - Provider replacement must not require domain/business-logic rewrites.
+
+## Verified Relevance API integration facts
+
+The current Relevance documentation confirms that agents are asynchronous: DİJİY triggers an agent job and polls for updates. The region-specific API base URL is provider-defined, and API-trigger configuration supplies the correct endpoint and credentials. The JavaScript/TypeScript SDK is also officially available.
+
+Implementation consequence: the adapter keeps region/base URL configurable, keeps credentials server-side, records provider execution IDs, and treats provider output as untrusted until DİJİY verification completes.
+
+Reference surfaces: Relevance API Triggers, Agent Conversation API, and official JavaScript SDK documentation.
