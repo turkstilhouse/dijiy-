@@ -44,6 +44,3 @@ create index if not exists ai_tasks_execution_state_idx
 create index if not exists ai_execution_idempotency_task_idx
   on public.ai_execution_idempotency(task_id, updated_at);
 
-
--- Security hardening for the append-only audit trigger function.
-alter function public.prevent_ai_audit_mutation() set search_path = '';
