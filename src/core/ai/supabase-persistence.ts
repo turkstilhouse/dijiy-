@@ -122,7 +122,7 @@ export class SupabaseExecutionPersistence implements ExecutionPersistence {
 
   async saveIdempotency(record: IdempotencyRecord): Promise<void> {
     const taskId = requireUuid(record.taskId, "idempotency.taskId");
-    await this.request("/ai_execution_idempotency", {
+    await this.request("/ai_execution_idempotency?on_conflict=idempotency_key", {
       method: "POST",
       headers: { Prefer: "resolution=merge-duplicates,return=minimal" },
       body: JSON.stringify({
