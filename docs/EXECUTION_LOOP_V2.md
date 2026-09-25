@@ -57,11 +57,11 @@ Human approval is mandatory before irreversible external actions, financial/lega
 
 ## Next implementation sequence
 
-1. Define canonical execution contracts.
+1. Define canonical execution contracts.\n\n## 2026-09-25 runtime hardening\n\nThe execution contract now supports correlation IDs, idempotency keys, structured tool invocation and explicit WAITING_TOOL / WAITING_EXTERNAL states. Provider runtime state remains outside canonical DİJİY state. Async tool work must resume through the execution boundary rather than bypassing policy, resource limits or audit.
 2. Add idempotency and execution correlation IDs.
 3. Wire policy gate into the worker path.
 4. Add provider-adapter invocation boundary.
-5. Add structured tool invocation and result validation.
+5. Add structured tool invocation and result validation.\n\nAsync tools may pause execution only through WAITING_TOOL / WAITING_EXTERNAL; resume returns through policy/resource checks.
 6. Persist audit/provenance for every material execution.
 7. Add approval pause/resume semantics.
 8. Add retry/dead-letter handling.
