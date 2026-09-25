@@ -8,7 +8,21 @@ export interface AIProvider {
   }>;
 }
 
-export interface ToolProvider {\n  id: string;\n  invoke(input: { toolId: string; task: TaskContract; input: unknown; idempotencyKey: string }): Promise<{ output: unknown; usage?: Partial<ResourceUsage>; waiting?: boolean }>;\n}\n\nexport interface AgentRuntime {
+export interface ToolProvider {\n  id: string;\n  invoke(input: { toolId: string; task: TaskContract; input: unknown; idempotencyKey: string }): Promise<{ output: unknown; usage?: Partial<ResourceUsage>; waiting?: boolean }>;\n}\n\nexport interface ToolProvider {
+  id: string;
+  invoke(input: {
+    toolId: string;
+    task: TaskContract;
+    input: unknown;
+    idempotencyKey: string;
+  }): Promise<{
+    output: unknown;
+    usage?: Partial<ResourceUsage>;
+    waiting?: boolean;
+  }>;
+}
+
+export interface AgentRuntime {
   id: string;
   execute(task: TaskContract, agent: AgentContract): Promise<{ output: unknown; usage: Partial<ResourceUsage> }>;
 }
