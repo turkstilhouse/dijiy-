@@ -7,12 +7,26 @@ export interface ExecutionHandler {
 export class ExecutionEngine {
  constructor(private readonly handler:ExecutionHandler){}
  async run(control:AIControlPlane,task:TaskContract,agent:AgentContract,capability:Capability):Promise<ExecutionResult>{
-  const executionId="exec_"+task.id+"_"+Date.now(),startedAt=Date.now(),current=control.state.current();
+  const executionId="exec_"+task.id,startedAt=Date.now(),current=control.state.current();
   try{
    control.killSwitch.assertRunning();const decision=control.authorize(agent,capability);
-   if(!decision.allowed){if(!["FAILED","CANCELLED"].includes(current))control.state.transition("FAILED");return{taskId:task.id,state:"FAILED",correlationId:executionId,error:decision.reasons.join(",")};}
-   if(decision.approvalRequired){if(current!=="POLICY_CHECK")throw new Error("Execution requires POLICY_CHECK before approval");control.state.transition("APPROVAL_REQUIRED");return{taskId:task.id,state:"APPROVAL_REQUIRED",correlationId:executionId};}
-   if(current==="POLICY_CHECK"||current==="APPROVED")control.state.transition("EXECUTING");else throw new Error("Execution not ready: current="+current);
+   await control.audit.append({id:"audit_"+executionId+"_policy",taskId:task.id,actorId:task.requestedBy,action:"POLICY_DECISION",state:control.state.current(),timestamp:new Date().toISOString(),metadata:{allowed:decision.allowed,approvalRequired:decision.approvalRequired,reasons:decision.reasons}});
+   if(!decision.allowed){
+    if(!["FAILED","CANCELLED"].includes(control.state.current()))control.state.transition("FAILED");
+    await control.persistence.saveCheckpoint({executionId,taskId:task.id,state:"FAILED",attempt:1,updatedAt:new Date().toISOString(),output:{error:decision.reasons}});
+    await control.audit.append({id:"audit_"+executionId+"_denied",taskId:task.id,actorId:task.requestedBy,action:"EXECUTION_DENIED",state:"FAILED",timestamp:new Date().toISOString(),metadata:{reasons:decision.reasons}});
+    return{taskId:task.id,state:"FAILED",correlationId:executionId,error:decision.reasons.join(",")};
+   }
+   if(decision.approvalRequired){
+    if(current!=="POLICY_CHECK")throw new Error("Execution requires POLICY_CHECK before approval");
+    control.state.transition("APPROVAL_REQUIRED");
+    const cp={executionId,taskId:task.id,state:"APPROVAL_REQUIRED",attempt:1,updatedAt:new Date().toISOString()};
+    await control.persistence.saveCheckpoint(cp);
+    await control.audit.append({id:"audit_"+executionId+"_approval",taskId:task.id,actorId:task.requestedBy,action:"APPROVAL_REQUIRED",state:"APPROVAL_REQUIRED",timestamp:new Date().toISOString(),metadata:{riskClass:task.riskClass}});
+    return{taskId:task.id,state:"APPROVAL_REQUIRED",correlationId:executionId,checkpoint:cp};
+   }
+   if(current==="POLICY_CHECK"||current==="APPROVED")control.state.transition("EXECUTING");
+   await control.persistence.saveCheckpoint({executionId,taskId:task.id,state:"EXECUTING",attempt:1,updatedAt:new Date().toISOString()});else throw new Error("Execution not ready: current="+current);
    control.governor.reserve({modelCalls:1});
    const controller=new AbortController();
    const deadline=Math.min(task.deadlineAt?Math.max(0,new Date(task.deadlineAt).getTime()-Date.now()):Number.MAX_SAFE_INTEGER,agent.maxRuntimeMs,task.budget.maxRuntimeMs);
@@ -23,10 +37,25 @@ export class ExecutionEngine {
    }});
    if(timer)clearTimeout(timer);control.killSwitch.assertRunning();
    const runtimeMs=Date.now()-startedAt;control.governor.reserve({...result.usage,runtimeMs});
-   if(result.waiting){const cp={executionId,taskId:task.id,state:result.waiting,attempt:1,updatedAt:new Date().toISOString(),...result.checkpoint};await control.persistence.saveCheckpoint(cp);return{taskId:task.id,state:result.waiting,correlationId:executionId,usage:result.usage,checkpoint:cp};}
+   if(result.waiting){const cp={executionId,taskId:task.id,state:result.waiting,attempt:1,updatedAt:new Date().toISOString(),...result.checkpoint};await control.persistence.saveCheckpoint(cp);
+    await control.audit.append({id:"audit_"+executionId+"_waiting_"+result.waiting.toLowerCase(),taskId:task.id,actorId:task.requestedBy,action:"EXECUTION_WAITING",state:result.waiting,timestamp:new Date().toISOString(),metadata:{executionId,checkpoint:result.checkpoint ?? {}}});
+    return{taskId:task.id,state:result.waiting,correlationId:executionId,usage:result.usage,checkpoint:cp};}
    if(control.state.current()==="WAITING_TOOL"||control.state.current()==="WAITING_EXTERNAL")throw new Error("Pending execution state was not resolved");
    control.state.transition("OBSERVING");control.state.transition("EVALUATING");control.state.transition("COMPLETED");
+   const completedCheckpoint={executionId,taskId:task.id,state:"COMPLETED",attempt:1,updatedAt:new Date().toISOString(),output:result.output};
+   await control.persistence.saveCheckpoint(completedCheckpoint);
+   await control.persistence.saveIdempotency({key:task.idempotencyKey ?? executionId,taskId:task.id,operation:"execution",status:"COMPLETED"});
+   await control.audit.append({id:"audit_"+executionId+"_completed",taskId:task.id,actorId:task.requestedBy,action:"EXECUTION_COMPLETED",state:"COMPLETED",timestamp:new Date().toISOString(),metadata:{runtimeMs,usage:result.usage ?? {}}});
    return{taskId:task.id,state:"COMPLETED",output:result.output,usage:result.usage,correlationId:executionId};
-  }catch(error){try{if(!["COMPLETED","FAILED","CANCELLED"].includes(control.state.current()))control.state.transition("FAILED");}catch{}return{taskId:task.id,state:"FAILED",correlationId:executionId,error:error instanceof Error?error.message:String(error)};}
+   }catch(error){
+   const message=error instanceof Error?error.message:String(error);
+   try{if(!["COMPLETED","FAILED","CANCELLED"].includes(control.state.current()))control.state.transition("FAILED");}catch{}
+   try{
+     await control.persistence.saveCheckpoint({executionId,taskId:task.id,state:"FAILED",attempt:1,updatedAt:new Date().toISOString(),output:{error:message}});
+     await control.persistence.saveIdempotency({key:task.idempotencyKey ?? executionId,taskId:task.id,operation:"execution",status:"FAILED"});
+     await control.audit.append({id:"audit_"+executionId+"_failed",taskId:task.id,actorId:task.requestedBy,action:"EXECUTION_FAILED",state:"FAILED",timestamp:new Date().toISOString(),metadata:{error:message}});
+   }catch{}
+   return{taskId:task.id,state:"FAILED",correlationId:executionId,error:message};
+ }
  }
 }
