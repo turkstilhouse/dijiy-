@@ -4,7 +4,7 @@ import { AIControlPlane } from "./control-plane";
 export interface ExecutionResult {
   taskId: string;
   state: string;
-  output?: unknown;
+  output?: unknown;\n  correlationId?: string;\n  usage?: Record<string, unknown>;
   error?: string;
 }
 
@@ -13,7 +13,10 @@ export interface ExecutionHandler {
 }
 
 export class ExecutionEngine {
-  constructor(private readonly handler: ExecutionHandler) {}
+  constructor(
+    private readonly handler: ExecutionHandler,
+    private readonly now: () => string = () => new Date().toISOString(),
+  ) {}
 
   async run(
     control: AIControlPlane,
@@ -43,7 +46,7 @@ export class ExecutionEngine {
       control.state.transition("EVALUATING");
       control.state.transition("COMPLETED");
 
-      return { taskId: task.id, state: "COMPLETED", output };
+      return { taskId: task.id, state: "COMPLETED", output: result.output, usage: result.usage, correlationId };
     } catch (error) {
       try {
         if (!["COMPLETED", "FAILED", "CANCELLED"].includes(control.state.current())) {
