@@ -33,12 +33,19 @@ Targets:
 - DİJİY Audit
 - DİJİY Data Pool
 - GitHub Engineering
+- Vercel (excluding lumina)
 - Figma Design
 - Canva Creative
 - Runway Media
 - monday Operations
 - Agent Reach
 - Ollama Local Runtime
+- DeerFlow
+- Google Workspace
+- Meta / Instagram
+- Stripe
+- iyzico
+- PayTR
 
 ### P1 — Build + Design
 
@@ -50,12 +57,15 @@ Targets:
 - Cursor
 - Codex
 - GitHub Copilot
-- Windsurf
+- Windsurf / Devin Desktop
 - Kiro
 - Qoder
 - Figma AI
 - UI UX Pro Max
 - Motion for React
+- Vercel AI SDK
+- HubSpot
+- Resend
 
 ### P2 — Media Production
 
@@ -79,6 +89,7 @@ Targets:
 - ElevenLabs
 - HeyGen
 - Synthesia
+- ComfyUI
 
 ### P3 — Intelligence
 
@@ -89,6 +100,8 @@ Targets:
 - Poppy
 - vidIQ
 - Apify
+- Firecrawl
+- Notion
 - Notion AI
 - NotebookLM
 - Otio AI
@@ -111,6 +124,7 @@ Targets:
 - Superhuman
 - Granola
 - PostHog Measurement
+- Slack
 
 ### P5 — Optional / Experimental
 
@@ -121,32 +135,40 @@ Examples include:
 - Hermes
 - OpenClaw
 - OmniRoute
+- OpenCode
+- Devin as a separate coding-agent route
 - Nano Banana variants
 - DeepSeek candidates not yet verified
 - community/local model tools
-- other duplicate or lower-priority tools
+- duplicate tools whose capabilities are already covered elsewhere
 
-## Connection record requirements
+## Newly identified gaps
 
-Every connected tool should eventually have:
-- owner / responsible agent
-- provider
-- purpose
-- capabilities
-- connection method
-- required scopes
-- credential location (reference only; never the secret)
-- health-check method
-- allowed operations
-- risk level
-- human-approval requirement
-- fallback provider
-- audit event mapping
-- current connection state
+The current research pass found several important categories that were missing from the original inventory:
 
-## ARAS rule
+1. Agent runtime: DeerFlow 2.x is an open-source runtime harness for long-horizon agents, subagents, memory, tools, skills and sandboxed execution. It is cataloged as a candidate core runtime, not yet connected. Official documentation and repository were checked. citeturn1search0turn1search7
+2. AI application runtime: Vercel AI SDK provides a provider-agnostic TypeScript layer for AI applications and agents. It is a development dependency rather than a normal OAuth connection. citeturn1search13turn1search20
+3. Commerce payments: Stripe is required for international billing/subscriptions; Türkiye-specific payment candidates iyzico and PayTR are cataloged separately so the payment layer does not depend on one provider. Stripe supports subscriptions and billing APIs. citeturn1search4turn1search8
+4. Google Workspace: Drive, Gmail and Calendar APIs provide programmatic file, mail and calendar access; OAuth scopes should remain narrow. citeturn2search4turn2search0turn2search11
+5. Social channel: Meta / Instagram is a required future publishing and insights surface for DİJİY's social-content workflows; permissions and app-review requirements must be verified during connection.
+6. Commerce/CRM: HubSpot is cataloged for customer lifecycle workflows.
+7. Transactional email: Resend is cataloged as a dedicated notification/email API, separate from Gmail.
+8. Research extraction: Firecrawl is cataloged as a complement to Agent Reach for structured web extraction.
+9. Local media: ComfyUI is cataloged for advanced local generative-media workflows.
+10. Team operations: Slack is cataloged for internal notifications and human-approval queues.
 
-ARAS may discover, classify, plan and route only within the verified capability boundary.
+## Current research conclusion
+
+Do not connect every cataloged application.
+
+The objective is a controlled DİJİY tool layer with:
+- one primary capability,
+- optional fallback providers,
+- explicit health checks,
+- narrow scopes,
+- human approval for risky actions,
+- audit events for execution,
+- no secret material in GitHub.
 
 A tool becomes production-routable only after:
 1. verification,
