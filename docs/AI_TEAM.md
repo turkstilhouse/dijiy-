@@ -130,3 +130,14 @@ AI modelleri, agent frameworks, MCP servers, developer tools, coding agents, loc
 
 ### Temel kural
 AR-GE ajanları üretim ekibinin yerine geçmez. Yeni teknoloji keşfeder, doğrular, test eder ve hazır olduğunda ARAS'a sunar. ARAS canonical DİJİJY sistemine eklenme kararını yönetir.
+
+## Duplicate Work Guard — Mandatory
+
+ARAS/KAYRA yeni bir iş başlatmadan önce repository + open PR + existing routes/modules + Core capability kayıtlarını kontrol eder.
+
+Canonical implementation varsa yeniden kurulmaz; mevcut implementation geliştirilir.
+Open PR aynı scope'u kapsıyorsa ikinci PR veya paralel uygulama açılmaz.
+Agent handoff'larında task_id, canonical_scope, current_implementation, repository_path, open_pr, owner_agent, status, next_action ve do_not_duplicate alanları korunur.
+Yeni web/page/module geliştirmelerinde önce canonical surface belirlenir.
+
+25.09.2026 kontrol notu: PR #1 mevcut DİJİJY uygulama temelidir. Yeni web yüzeyleri bunun üzerine geliştirilmelidir. Sonradan oluşturulan alternatif web prototipi canonical uygulama temeli olarak kullanılmaz.
