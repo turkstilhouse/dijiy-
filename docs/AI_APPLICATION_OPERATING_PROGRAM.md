@@ -145,3 +145,75 @@ Vercel currently exposes only the existing "lumina" project; it is excluded from
 Replit apps are visible, but Replit remains paused as a DİJİY core dependency.
 
 Cataloged does not mean connected, and connected does not mean production-approved. ARAS must enforce the distinction.
+
+## 7. Duplicate Work Prevention & Canonical Implementation Protocol
+
+Amaç: Aynı sayfanın, modülün, connector'ın, workflow'un veya altyapı katmanının farklı ajanlar tarafından ikinci kez kurulmasını engellemek.
+
+### Mandatory preflight
+
+Her yeni geliştirme görevi başlamadan önce ARAS/KAYRA şu sırayı uygular:
+
+1. DISCOVER — mevcut repo, açık PR'lar, branch'ler, dosyalar, routes, deployed projects ve ilgili Core kayıtları kontrol edilir.
+2. MATCH — istenen capability'nin mevcut bir implementation'ı, PR'ı, prototype'ı veya planı aranır.
+3. CANONICALIZE — aynı iş için birden fazla aday varsa tek canonical implementation belirlenir.
+4. REUSE — mevcut implementation geliştirilir; ikinci bir paralel implementation oluşturulmaz.
+5. HANDOFF — iş başka bir ajana aktarılıyorsa mevcut dosya/PR/task kimliği aktarılır.
+6. LOCK — aktif görev kaydına implementation scope ve owner yazılır.
+7. BUILD — yalnızca preflight temizse yeni kod/modül oluşturulur.
+
+### Canonical implementation rules
+
+- Aynı kullanıcı ihtiyacı için iki ayrı homepage, web shell, Core service, connector veya workflow oluşturulamaz.
+- Prototype ile production implementation aynı anda tutulacaksa açıkça prototype ve canonical olarak etiketlenir.
+- Bir PR mevcut implementation'ı zaten sağlıyorsa yeni implementation açılmaz; mevcut PR değerlendirilir veya güncellenir.
+- Açık PR'lar yeni geliştirme başlamadan önce kontrol edilir.
+- lumina, Replit veya başka excluded/paused yüzeyler DİJİJY canonical implementation'ı olarak kullanılamaz.
+- DİJİJY Core canonical source of truth olmaya devam eder.
+- Provider ve dış uygulamalar canonical implementation değil, adapter/capability olarak değerlendirilir.
+
+### Agent handoff contract
+
+Her görev aktarımında en az şu alanlar korunur:
+
+- task_id
+- goal
+- canonical_scope
+- current_implementation
+- repository_path
+- branch
+- open_pr
+- owner_agent
+- status
+- next_action
+- do_not_duplicate
+
+Bir ajan mevcut implementation bulursa yeniden kurmak yerine mevcut kaydı devam ettirir.
+
+### Duplicate detection gate
+
+Build öncesi şu soruların tamamı cevaplanır:
+
+- Bu iş daha önce yapılmış mı?
+- Aynı route/module/component başka yerde var mı?
+- Açık PR bunu zaten yapıyor mu?
+- Başka bir agent aynı scope üzerinde çalışıyor mu?
+- Core'da aynı capability kaydı var mı?
+- Mevcut implementation genişletilebilir mi?
+
+Herhangi bir cevap evet ise yeni implementation otomatik başlatılmaz; ARAS scope'u birleştirir.
+
+### Current incident prevention
+
+25.09.2026 tarihinde oluşturulan ilk apps/web yüzeyi ile daha önce mevcut olan PR #1 uygulama temeli aynı ürün yüzeyini iki kez kurmaması gereken örnek olarak kaydedilmiştir. Bundan sonra PR #1'deki mevcut uygulama temeli canonical kabul edilir; yeni web yüzeyleri onun üzerine geliştirilir.
+
+### Definition of done
+
+Bir görev ancak şu koşullarda tamamlanmış sayılır:
+
+- canonical implementation belirlenmiş,
+- duplicate implementation oluşmamış,
+- açık PR/branch durumu kontrol edilmiş,
+- ilgili agent handoff kaydı güncellenmiş,
+- Core/canonical data sınırları korunmuş,
+- test/validation sonucu kaydedilmiş.
