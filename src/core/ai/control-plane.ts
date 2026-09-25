@@ -9,6 +9,7 @@ import { MemoryAuditSink, AuditSink } from "./audit";
 export class MemoryExecutionPersistence implements ExecutionPersistence {
  private readonly checkpoints=new Map<string,ExecutionCheckpoint>();
  private readonly idempotency=new Map<string,IdempotencyRecord>();
+ async saveTask(task:TaskContract,executionId:string){this.checkpoints.set(executionId,Object.freeze({executionId,taskId:task.id,state:task.state,attempt:0,updatedAt:new Date().toISOString()}));}
  async saveCheckpoint(c:ExecutionCheckpoint){this.checkpoints.set(c.executionId,Object.freeze({...c}));}
  async loadCheckpoint(id:string){return this.checkpoints.get(id);}
  async getIdempotency(key:string){return this.idempotency.get(key);}
