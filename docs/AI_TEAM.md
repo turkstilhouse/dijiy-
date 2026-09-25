@@ -1,4 +1,4 @@
-# DİJİY AI TEAM
+# DİJİJY AI TEAM
 
 ARAS is the central orchestrator. Fatma Gül is the final human decision-maker for irreversible, financial, legal, credential and major product decisions.
 
@@ -6,7 +6,7 @@ ARAS is the central orchestrator. Fatma Gül is the final human decision-maker f
 - ARAS — Baş Sistem Mimarı & Strateji Direktörü
 - KAYRA — Baş Yazılım Mühendisi & Uygulama Direktörü
 - ÜRÜN — Ürün & Ekosistem Direktörü
-- ENTEGRASYON — DİJİY Connect & Provider Direktörü
+- ENTEGRASYON — DİJİJ Connect & Provider Direktörü
 
 ## Data / Intelligence
 - VERİ — Veri & Ölçüm Direktörü
@@ -29,6 +29,20 @@ ARAS is the central orchestrator. Fatma Gül is the final human decision-maker f
 
 ## Trust
 - GÜVENLİK — Güvenlik, Risk & QA Direktörü
+
+## Coding Engineering Team — 2026-09-25
+
+KAYRA altında ayrı bir coding engineering team kurulmuştur. Bu ekip yeni bir bağımsız ürün ekibi değildir; DİJİJY'nin tek canonical repository'sinde çalışan uzmanlaşmış coding capability katmanıdır.
+
+- KAYRA — Engineering Director.
+- CLAUDE CODE — primary implementation agent.
+- CODEX — independent engineering/review agent; hard debugging, refactor validation, testing ve hardening.
+- CURSOR — optional IDE specialist; canonical pipeline yerine geçmez.
+- GEMINI CLI — technology-watch/evaluation specialist; production ancak doğrulama kapılarından sonra.
+- CODE REVIEW + QA + SECURITY — implementation sonrası kalite ve güvenlik kapıları.
+
+Kural: Aynı scope üzerinde iki coding agent paralel canonical implementation yazamaz. İkinci agent reviewer, validator veya açıkça ayrılmış subtask sahibi olur.
+Detaylı ekip sözleşmesi: docs/CODING_ENGINEERING_TEAM.md.
 
 ## New Capability Assignments — 2026-09-25
 
@@ -55,7 +69,7 @@ Yeni eklenen araç/model yetenekleri yeni bağımsız ajan olarak çoğaltılmaz
 - Meituan talking-video candidate — exact official model/API doğrulanana kadar production routing kapalı.
 
 ## Operating Model
-Agents are capability-based. ARAS routes work to agents, models and tools through canonical DİJİY contracts.
+Agents are capability-based. ARAS routes work to agents, models and tools through canonical DİJİJY contracts.
 
 Execution flow:
 Fatma Gül → ARAS → Task/Plan → Model Router → Domain Agents → Tools/Connectors → Validation/MİHENK → Human Approval when required → Canonical Data → Audit → ARAS.
@@ -70,10 +84,9 @@ Cross-cutting control layers:
 
 External tools and providers are replaceable adapters, not the source of truth.
 
-
 ## Full Application-to-Agent Binding — 2026-09-25
 
-The application registry is capability-based. The following tools are attached to existing agents rather than created as duplicate agents.
+The application registry is capability-based. Tools are attached to existing agents rather than created as duplicate agents.
 
 - KAYRA: Claude Code, Claude Cowork, Claude scheduled workflows, Claude Agent Skills/CLAUDE.md, Context7, Codex remote tasks, claude-mem (developer-only), Headroom.
 - ENTEGRASYON: Model Router, OmniRoute candidate, Pinokio, Vercel, Supabase, provider/connector lifecycle.
@@ -93,12 +106,11 @@ The application registry is capability-based. The following tools are attached t
 
 ### Production boundary
 
-Cataloged applications are not automatically connected. Connected applications are not automatically production-approved. Community/local tools require exact repository/version, health, license and adapter verification. External providers remain replaceable adapters; DİJİY remains the source of truth.
+Cataloged applications are not automatically connected. Connected applications are not automatically production-approved. Community/local tools require exact repository/version, health, license and adapter verification. External providers remain replaceable adapters; DİJİJY remains the source of truth.
 
 ### Program
 
-Detailed tool-selection, production lanes, 30-day implementation phases and operating cadence are defined in `docs/AI_APPLICATION_OPERATING_PROGRAM.md`.
-
+Detailed tool-selection, production lanes, 30-day implementation phases and operating cadence are defined in docs/AI_APPLICATION_OPERATING_PROGRAM.md.
 
 ## YENİ TEKNOLOJİLER / TECHNOLOGY WATCH — 2026-09-25
 
