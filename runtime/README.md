@@ -32,4 +32,4 @@ The runtime now has real local bridges for Ollama and Agent Reach.
 - Supabase audit writes use server-side `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`. Secrets must stay outside GitHub and outside browser/client bundles.
 - The execution engine records start, finish, waiting, and failure states without storing model input payloads.
 
-Agent Reach is a capability layer rather than a single universal web API; installed channels and their health are determined by its doctor output. citeturn0search0
+Agent Reach is a capability layer rather than a single universal web API; installed channels and their health are determined by its doctor output.
