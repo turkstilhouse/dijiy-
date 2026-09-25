@@ -5,6 +5,7 @@ export interface RelevanceAIProviderConfig {
   region: string;
   projectId: string;
   apiKey: string;
+  authorizationToken?: string;
   baseUrl?: string;
   pollIntervalMs?: number;
   maxPolls?: number;
@@ -42,10 +43,11 @@ export class RelevanceAIWorkforceProvider implements WorkforceProvider {
     idempotencyKey: string;
     input: unknown;
   }) {
+    const authorization = this.config.authorizationToken ?? this.config.apiKey;
     const response = await this.fetchImpl(`${this.baseUrl}/agents/trigger`, {
       method: "POST",
       headers: {
-        Authorization: `${this.config.projectId}:${this.config.apiKey}`,
+        Authorization: authorization,
         "Content-Type": "application/json",
         "X-Dijiy-Execution-Id": input.executionId,
         "Idempotency-Key": input.idempotencyKey,
