@@ -13,3 +13,4 @@ export * from "./audit";
 export * from "./runtime-providers";
 export * from "./n8n-provider";
 export * from "./relevance-ai-provider";
+export * from "./supabase-persistence";
