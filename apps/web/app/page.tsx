@@ -1,0 +1,7 @@
+const modules = [
+  {k:"01",t:"YENİ TEKNOLOJİLER",d:"Yeni AI uygulamaları, modeller, ajanlar, MCP'ler, coding araçları, local AI, yaratıcı teknoloji ve otomasyonları keşfetme ve doğrulama yüzeyi.",href:"/technology-watch"},
+  {k:"02",t:"AI OS",d:"ARAS merkezli orkestrasyon, capability tabanlı ajanlar, provider adapter'ları, politika ve denetim katmanı."},
+  {k:"03",t:"İPEK YOLU",d:"Commerce, culture, media, education, community ve gelecekteki DİJİJY modülleri için genişleyebilir platform yüzeyi."}
+];
+
+export default function Home(){return <main className="shell"><nav className="nav"><div className="brand">DİJİJY</div><div className="status">FOUNDATION · 25.09.2026</div></nav><section className="hero"><div className="eyebrow">Dijital İpek Yolu</div><h1>Tek bir çekirdek.<br/>Sınırsız yol.</h1><p>DİJİJY; kimlik, yetki, kanonik veri, orkestrasyon, bağlantılar ve denetimi kendi çekirdeğinde tutan modüler bir dijital ekosistem olarak tasarlanır. Bu ilk yüzey, sonraki modüllerin üzerine kurulacağı başlangıç katmanıdır.</p></section><section className="section"><div className="grid">{modules.map(m=><article className="card" key={m.k}><small>{m.k}</small><h2>{m.t}</h2><p>{m.d}</p>{m.href&&<a className="link" href={m.href}>YÜZEYİ AÇ →</a>}</article>)}</div></section><footer className="footer">DİJİJY · Canonical source of truth remains the DİJİJY core. External providers are adapters.</footer></main>}
