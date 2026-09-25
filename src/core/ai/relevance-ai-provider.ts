@@ -8,6 +8,7 @@ export interface RelevanceAIProviderConfig {
   baseUrl?: string;
   pollIntervalMs?: number;
   maxPolls?: number;
+  resolveAgentId?: (agent: AgentContract) => string;
   fetchImpl?: typeof fetch;
 }
 
@@ -46,11 +47,11 @@ export class RelevanceAIWorkforceProvider implements WorkforceProvider {
       headers: {
         Authorization: `${this.config.projectId}:${this.config.apiKey}`,
         "Content-Type": "application/json",
-        "X-DİJİY-Execution-Id": input.executionId,
+        "X-Dijiy-Execution-Id": input.executionId,
         "Idempotency-Key": input.idempotencyKey,
       },
       body: JSON.stringify({
-        agent_id: input.agent.id,
+        agent_id: this.config.resolveAgentId?.(input.agent) ?? input.agent.id,
         message: {
           role: "user",
           content: typeof input.input === "string"
