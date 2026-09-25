@@ -1,6 +1,6 @@
 # DİJİY AI Control Plane — ARAS
 
-Status: DESIGN BASELINE
+Status: IMPLEMENTATION BASELINE
 Date: 2026-09-25
 
 ## Purpose
@@ -95,3 +95,18 @@ AIProvider, AgentRuntime, WorkforceProvider, AutomationProvider, MemoryProvider,
 External AI Workforce and automation runtimes are adapters. Relevance AI and n8n are current candidates; neither becomes canonical.
 
 A provider replacement must not require changes to canonical business logic.
+
+
+## Durable execution
+
+The control plane now includes a concrete Supabase persistence adapter.
+- task and execution identity are persisted
+- execution checkpoints are persisted
+- execution idempotency is persisted
+- audit events are written through the Supabase audit sink
+- control-plane tables use row-level security and are not exposed to anonymous or authenticated clients
+- Supabase is a persistence adapter; it is not the canonical business domain
+
+## Verification boundary
+
+The live Supabase project has the control-plane schema applied and was queried after the changes. Repository TypeScript build and test verification remains pending because the current repository does not contain a package manifest or test configuration.
