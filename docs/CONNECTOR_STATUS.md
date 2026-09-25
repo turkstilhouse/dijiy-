@@ -32,3 +32,20 @@ Checked: 2026-09-24
 7. ERP / CRM / accounting
 
 Rule: DİJİY owns identity, permissions, canonical data, orchestration and connector contracts. Providers are replaceable adapters.
+
+## AI Creative / Local Runtime Additions — 2026-09-25
+
+Registered in the DİJİY AI registry:
+
+- ByteDance Seed / Seedance 2.5 — video generation, reference-controlled creation and editing. Official model catalog verified.
+- Google Gemma 4 — local/open multimodal agent runtime; 12B, 26B A4B and 31B registered. Official Google documentation verified.
+- Ollama — local model runtime registered as the execution layer for local/open models.
+- Google Lyria 3.5 — music generation registered. Officially available in Google Flow Music; automated backend API routing remains subject to API-surface verification.
+- Agent Reach — internet research/channel capability registered. Runtime health must be checked with its own doctor command before production use.
+- DeepSeek V4 Plus — recorded as an unverified candidate only; disabled for production routing until an official model/API source is verified.
+- Meituan talking-video tool shown in the supplied reference — recorded as an unverified candidate only; no production routing until the exact official model/project and API are identified.
+
+## Routing Rule
+
+ARAS may route only verified and connected providers into production execution. Unverified candidates remain research/experimental entries. Credentials and provider secrets must never be committed to GitHub.
+
