@@ -3,31 +3,45 @@
 ARAS is the central orchestrator. Fatma Gül is the final human decision-maker for irreversible, financial, legal, credential and major product decisions.
 
 ## Core
-- ARAS — Chief Systems Architect & Strategy
-- KAYRA — Chief Software Engineer & Application
-- ÜRÜN — Product & Ecosystem
-- ENTEGRASYON — DİJİY Connect & Provider
+- ARAS — Baş Sistem Mimarı & Strateji Direktörü
+- KAYRA — Baş Yazılım Mühendisi & Uygulama Direktörü
+- ÜRÜN — Ürün & Ekosistem Direktörü
+- ENTEGRASYON — DİJİY Connect & Provider Direktörü
 
 ## Data / Intelligence
-- VERİ — Data & Measurement
-- ARAŞTIRMA — Research & Market Intelligence
-- ARŞİV — Turkish Culture Archive & Knowledge
-- RAPOR — Reporting & Audit
+- VERİ — Veri & Ölçüm Direktörü
+- ARAŞTIRMA — Araştırma & Pazar İstihbaratı Direktörü
+- ARŞİV — Türk Kültür Arşivi & Bilgi Direktörü
+- RAPOR — Raporlama & Denetim Direktörü
 
 ## Commerce / Operations
-- PAZAR — Marketplace
-- MÜŞTERİ — CRM & Customer
-- KUMAŞ — Fabric & Supply
-- MALİYET — Costing & Pricing
-- ÜRETİM — Production Coordination
-- ERMES — Marketing & Advertising OS
+- PAZAR — Marketplace Direktörü
+- MÜŞTERİ — CRM & Müşteri Direktörü
+- KUMAŞ — Kumaş & Tedarik Direktörü
+- MALİYET — Maliyet & Fiyatlandırma Direktörü
+- ÜRETİM — Üretim Koordinasyon Direktörü
+- ERMES — Pazarlama & Reklam İşletim Sistemi
 
 ## Creative / Spatial
-- TASARIM — Design
-- UZAY — 3D / Spatial / Digital Worlds
-- DÜNYA — Global Culture, Language & Localization
+- TASARIM — Tasarım Direktörü
+- UZAY — 3D, Spatial & Digital World Direktörü
+- DÜNYA — Global Kültür, Dil & Yerelleştirme Direktörü
 
 ## Trust
-- GÜVENLİK — Security, Risk & QA
+- GÜVENLİK — Güvenlik, Risk & QA Direktörü
 
-Agents are capability-based. ARAS routes work to agents and providers through canonical DİJİY contracts. External tools are replaceable providers, not the source of truth.
+## Operating Model
+Agents are capability-based. ARAS routes work to agents, models and tools through canonical DİJİY contracts.
+
+Execution flow:
+Fatma Gül → ARAS → Task/Plan → Model Router → Domain Agents → Tools/Connectors → Validation/MİHENK → Human Approval when required → Canonical Data → Audit → ARAS.
+
+Cross-cutting control layers:
+- MODEL ROUTER — görev için uygun AI/model seçimi
+- EVENT ENGINE — olay bazlı otomatik tetikleme
+- TASK ENGINE — görev, alt görev, bağımlılık ve durum yönetimi
+- MEMORY — doğrulanmış sistem hafızası ve durum
+- AUDIT — izlenebilirlik ve işlem kayıtları
+- MİHENK — kalite, politika, güvenlik ve onay kapısı
+
+External tools and providers are replaceable adapters, not the source of truth.
