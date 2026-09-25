@@ -30,6 +30,30 @@ ARAS is the central orchestrator. Fatma Gül is the final human decision-maker f
 ## Trust
 - GÜVENLİK — Güvenlik, Risk & QA Direktörü
 
+## New Capability Assignments — 2026-09-25
+
+Yeni eklenen araç/model yetenekleri yeni bağımsız ajan olarak çoğaltılmaz; mevcut ajanlara capability olarak bağlanır.
+
+### TASARIM + ERMES + ÜRETİM
+- Seedance 2.5 — video generation/editing, fashion campaign motion ve reference-controlled creative.
+- Lyria 3.5 — müzik ve yaratıcı ses üretimi; otomatik backend routing yalnızca doğrulanmış API/connector bulunduğunda.
+
+### KAYRA + VERİ + ARŞİV + ARAŞTIRMA
+- Gemma 4 + Ollama — local/private inference, structured extraction, agent sub-task ve privacy-sensitive preprocessing.
+- Local runtime health ve public exposure kontrolleri zorunlu.
+
+### ARAŞTIRMA + VERİ
+- Agent Reach — public-web research, source/channel discovery ve research health checks.
+- Kaynak provenance ve connector güvenlik kuralları korunur.
+
+### ENTEGRASYON + GÜVENLİK
+- Model Router — provider seçimini capability, modality, complexity, privacy, verification, health ve policy üzerinden yapar.
+- Provider'lar canonical source değildir; adapter olarak kalır.
+
+### R&D / DISABLED
+- DeepSeek V4 Plus — unverified candidate; production routing kapalı.
+- Meituan talking-video candidate — exact official model/API doğrulanana kadar production routing kapalı.
+
 ## Operating Model
 Agents are capability-based. ARAS routes work to agents, models and tools through canonical DİJİY contracts.
 
