@@ -11,7 +11,9 @@ const transitions: Record<ExecutionState, ExecutionState[]> = {
   APPROVAL_REQUIRED: ["APPROVED", "FAILED", "CANCELLED"],
   APPROVED: ["EXECUTING", "FAILED", "CANCELLED"],
   EXECUTING: ["OBSERVING", "WAITING_TOOL", "WAITING_EXTERNAL", "FAILED", "CANCELLED"],
-  WAITING_TOOL: ["EXECUTING", "OBSERVING", "FAILED", "CANCELLED"],\n  WAITING_EXTERNAL: ["EXECUTING", "OBSERVING", "FAILED", "CANCELLED"],\n  OBSERVING: ["EVALUATING", "FAILED", "CANCELLED"],
+  WAITING_TOOL: ["EXECUTING", "OBSERVING", "FAILED", "CANCELLED"],
+  WAITING_EXTERNAL: ["EXECUTING", "OBSERVING", "FAILED", "CANCELLED"],
+  OBSERVING: ["EVALUATING", "FAILED", "CANCELLED"],
   EVALUATING: ["COMPLETED", "FAILED", "GENERATING", "CANCELLED"],
   COMPLETED: [],
   FAILED: [],
@@ -21,7 +23,9 @@ const transitions: Record<ExecutionState, ExecutionState[]> = {
 export class ExecutionStateMachine {
   constructor(private state: ExecutionState = "REQUESTED") {}
 
-  current(): ExecutionState { return this.state; }
+  current(): ExecutionState {
+    return this.state;
+  }
 
   transition(next: ExecutionState): void {
     if (!transitions[this.state].includes(next)) {
