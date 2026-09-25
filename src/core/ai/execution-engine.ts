@@ -25,6 +25,15 @@ export class ExecutionEngine {
   const current=control.state.current();
 
   try{
+   const idempotencyKey=task.idempotencyKey??executionId;
+   const existing=await control.persistence.getIdempotency(idempotencyKey);
+   if(existing?.status==="COMPLETED"){
+    const checkpoint=await control.persistence.loadCheckpoint(existing.taskId===task.id?executionId:executionId);
+    return{taskId:task.id,state:"COMPLETED",output:checkpoint?.output,correlationId:executionId,checkpoint};
+   }
+   if(existing?.status==="IN_PROGRESS"){
+    return{taskId:task.id,state:"FAILED",correlationId:executionId,error:"Idempotency key is already in progress"};
+   }
    await control.persistence.saveTask(task,executionId);
    await control.audit.append({
     id:"audit_"+executionId+"_started",taskId:task.id,actorId:task.requestedBy,
@@ -46,7 +55,7 @@ export class ExecutionEngine {
      output:{error:decision.reasons}
     });
     await control.persistence.saveIdempotency({
-     key:task.idempotencyKey??executionId,taskId:task.id,operation:"execution",status:"FAILED"
+     key:idempotencyKey,taskId:task.id,operation:"execution",status:"FAILED"
     });
     await control.audit.append({
      id:"audit_"+executionId+"_denied",taskId:task.id,actorId:task.requestedBy,
@@ -79,6 +88,9 @@ export class ExecutionEngine {
     executionId,taskId:task.id,state:"EXECUTING",attempt:1,updatedAt:new Date().toISOString()
    });
 
+   await control.persistence.saveIdempotency({
+    key:idempotencyKey,taskId:task.id,operation:"execution",status:"IN_PROGRESS"
+   });
    control.governor.reserve({modelCalls:1});
    const controller=new AbortController();
    const deadline=Math.min(
@@ -131,7 +143,7 @@ export class ExecutionEngine {
    };
    await control.persistence.saveCheckpoint(completedCheckpoint);
    await control.persistence.saveIdempotency({
-    key:task.idempotencyKey??executionId,taskId:task.id,operation:"execution",status:"COMPLETED"
+    key:idempotencyKey,taskId:task.id,operation:"execution",status:"COMPLETED"
    });
    await control.audit.append({
     id:"audit_"+executionId+"_completed",taskId:task.id,actorId:task.requestedBy,
@@ -150,7 +162,7 @@ export class ExecutionEngine {
      executionId,taskId:task.id,state:"FAILED",attempt:1,updatedAt:new Date().toISOString(),output:{error:message}
     });
     await control.persistence.saveIdempotency({
-     key:task.idempotencyKey??executionId,taskId:task.id,operation:"execution",status:"FAILED"
+     key:idempotencyKey,taskId:task.id,operation:"execution",status:"FAILED"
     });
     await control.audit.append({
      id:"audit_"+executionId+"_failed",taskId:task.id,actorId:task.requestedBy,
