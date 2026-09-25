@@ -90,6 +90,8 @@ Every long-running task must support:
 ## Provider portability
 
 Internal interfaces must isolate:
-AIProvider, AgentRuntime, MemoryProvider, SearchProvider, BrowserProvider, CreativeProvider, StorageProvider, ObservabilityProvider.
+AIProvider, AgentRuntime, WorkforceProvider, AutomationProvider, MemoryProvider, SearchProvider, BrowserProvider, CreativeProvider, StorageProvider, ObservabilityProvider.
+
+External AI Workforce and automation runtimes are adapters. Relevance AI and n8n are current candidates; neither becomes canonical.
 
 A provider replacement must not require changes to canonical business logic.
