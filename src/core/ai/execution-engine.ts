@@ -23,12 +23,12 @@ export class ExecutionEngine {
   const executionId="exec_"+task.id;
   const startedAt=Date.now();
   const current=control.state.current();
+  const idempotencyKey=task.idempotencyKey??executionId;
 
   try{
-   const idempotencyKey=task.idempotencyKey??executionId;
    const existing=await control.persistence.getIdempotency(idempotencyKey);
    if(existing?.status==="COMPLETED"){
-    const checkpoint=await control.persistence.loadCheckpoint(existing.taskId===task.id?executionId:executionId);
+    const checkpoint=await control.persistence.loadCheckpoint(executionId);
     return{taskId:task.id,state:"COMPLETED",output:checkpoint?.output,correlationId:executionId,checkpoint};
    }
    if(existing?.status==="IN_PROGRESS"){
