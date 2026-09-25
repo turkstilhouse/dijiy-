@@ -8,3 +8,5 @@ export * from "./evidence-verifier";
 export * from "./eval-contract";
 export * from "./control-plane";
 export * from "./invariants";
+export * from "./execution-engine";
+export * from "./audit";
