@@ -98,3 +98,35 @@ Cataloged applications are not automatically connected. Connected applications a
 ### Program
 
 Detailed tool-selection, production lanes, 30-day implementation phases and operating cadence are defined in `docs/AI_APPLICATION_OPERATING_PROGRAM.md`.
+
+
+## AR-GE / TECHNOLOGY DISCOVERY UNIT — 2026-09-25
+
+Bu bölüm yalnızca yeni teknoloji, yeni AI uygulaması, yeni model, yeni agent framework, MCP/tool, local runtime, creative technology, automation, research infrastructure ve DİJİJY'nin işine yarayabilecek yeni programları keşfetmek içindir.
+
+### AR-GE ajanları
+- KEŞİF — Yeni teknoloji ve uygulama keşif ajanı. Web/GitHub/Hugging Face/official release kaynaklarını tarar.
+- TEKNOLOJİ — Teknik değerlendirme ajanı. Yeni aracın DİJİJY mimarisine teknik uyumunu, API/MCP/local runtime yapısını inceler.
+- DENEY — Benchmark ve PoC ajanı. Uygun görülen adayları kontrollü test eder; kalite, hız, maliyet ve entegrasyon yükünü ölçer.
+- İNOVASYON — Ürün fırsatı ajanı. Yeni teknolojinin DİJİJY/TURKSTİLHOUSE için gerçek kullanım senaryosunu çıkarır.
+- GÜVENLİK-ARŞİV — Güvenlik, lisans, provenance ve risk incelemesi yapar.
+
+### AR-GE akışı
+KEŞİF → TEKNOLOJİ → GÜVENLİK-ARŞİV → DENEY → İNOVASYON → ARAS → Capability Registry → ilgili mevcut agent.
+
+### Otomatik ekleme politikası
+Yeni bulunan her araç doğrudan production'a alınmaz.
+- Discovery: aday kaydı oluştur.
+- Verified: resmi kaynak/repository/API doğrula.
+- Tested: kontrollü PoC/health check.
+- Approved: ARAS + MİHENK production capability kararı.
+- Connected: adapter/connector hazırla.
+- Production: yalnızca policy, health, license ve security koşulları sağlanırsa routing'e aç.
+
+Yeni teknoloji uygun bulunduğunda AR-GE bölümü Application Registry ve Capability Registry'yi günceller; ilgili mevcut ajana capability olarak bağlanmasını sağlar. Yeni araç gereksizse veya mevcut bir capability'yi anlamlı şekilde geliştirmiyorsa eklenmez.
+
+### Sürekli tarama kapsamı
+AI modelleri, agent frameworks, MCP servers, developer tools, coding agents, local AI, multimodal systems, image/video/audio tools, 3D/spatial systems, RAG/memory/context tools, automation platforms, analytics, marketing technology, commerce technology, security/privacy tools ve DİJİJY mimarisini iyileştirebilecek altyapılar.
+
+### Temel kural
+AR-GE ajanları üretim ekibinin yerine geçmez. Yeni teknoloji keşfeder, doğrular, test eder ve hazır olduğunda ARAS'a sunar. ARAS canonical DİJİJY sistemine eklenme kararını yönetir.
