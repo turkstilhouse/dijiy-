@@ -54,3 +54,23 @@ The team is synchronized around the current DİJİY AI Control Plane baseline an
 
 ### Synchronization rule
 No agent may independently redefine canonical data, permissions, risk class, approval state, provider trust, evaluation status or production authority. New capabilities enter through registry → policy → resource → evidence → evaluation → approval.
+
+
+## LATEST TEAM UPDATE — 2026-09-25
+
+- GPT-6 Sol/Luna are now current provider candidates. Route by measured task quality, latency and cost; do not hard-code a model.
+- GPT-6 Astra adds async tool calling, mid-turn steering and dynamic reasoning effort. ARAS/Execution Engine should treat pending tool work and steering as first-class execution events.
+- OpenAI Agents API is public beta with durable sessions, context compaction/recovery, tools/MCP and hosted or external sandboxes. ENTEGRASYON/KAYRA should expose this only through the existing AgentRuntime adapter.
+- MCP 2026-07-28 is a stateless protocol core with Tasks, authorization hardening, extensions and MCP Apps. ENTEGRASYON should design DİJİY Connect for stateless horizontal scaling and explicit task state owned by DİJİY.
+- A2UI is a declarative agent-driven UI format. UZAY/ÜRÜN should evaluate it as a possible dynamic-interface transport; untrusted agents must never send executable UI code.
+- OpenAI has added organization/project API-key governance and key-expiration controls. GÜVENLİK should map these to DİJİY credential lifecycle, rotation and least-privilege controls.
+- GPT-6 supports long-context workloads and prompt caching. VERİ/ARAS should measure cache hit rate, context size, latency and cost as execution telemetry.
+- OpenAI's current model guidance positions Astra for hardest work, Sol for demanding reasoning/agentic work and Luna for efficient repeatable work. This is provider guidance, not DİJİY routing policy; routing remains evaluation-based.
+
+### Immediate architecture implications
+1. Add async tool/pending-work states to the execution contract before adopting Astra-style async tools.
+2. Keep provider runtime state outside canonical DİJİY task state; persist only normalized execution state and provenance.
+3. Add MCP statelessness and authorization tests to ENTEGRASYON/GÜVENLİK evals.
+4. Add dynamic-UI security tests for A2UI-style declarative messages.
+5. Add model cost/cache/latency dimensions to RAPOR/VERİ evaluation telemetry.
+6. Do not switch production routing solely because a new model/provider is released.
