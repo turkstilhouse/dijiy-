@@ -93,6 +93,25 @@ export interface Approval {
   expiresAt?: string;
 }
 
+export interface ToolInvocationContract {
+  id: string;
+  taskId: string;
+  toolId: string;
+  providerId?: string;
+  riskClass: RiskClass;
+  inputHash: string;
+  idempotencyKey: string;
+  state: "REQUESTED" | "AUTHORIZED" | "RUNNING" | "WAITING" | "COMPLETED" | "FAILED" | "CANCELLED";
+  createdAt: string;
+}
+
+export interface ExecutionCorrelation {
+  taskId: string;
+  executionId: string;
+  parentExecutionId?: string;
+  attempt: number;
+}
+
 export interface AuditEvent {
   id: string;
   taskId: string;
