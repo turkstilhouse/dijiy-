@@ -21,3 +21,8 @@ The platform may grow across commerce, social, media, education, culture, touris
 Identity & Access → Organizations & Workspaces → Core Domain → DİJİY Connect → Data Platform → ARAS Orchestration → Applications → Digital Worlds
 
 See docs/ for the initial architecture specifications.
+
+
+## First application surface
+
+The first web surface is being built in `apps/web` as a single modular application foundation. The initial routes are `/` and `/technology-watch`. This is a foundation layer, not a separate microservice. The web surface does not become the canonical source of truth; DİJİJY Core remains authoritative.
