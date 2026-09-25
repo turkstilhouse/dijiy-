@@ -69,3 +69,32 @@ Cross-cutting control layers:
 - MİHENK — kalite, politika, güvenlik ve onay kapısı
 
 External tools and providers are replaceable adapters, not the source of truth.
+
+
+## Full Application-to-Agent Binding — 2026-09-25
+
+The application registry is capability-based. The following tools are attached to existing agents rather than created as duplicate agents.
+
+- KAYRA: Claude Code, Claude Cowork, Claude scheduled workflows, Claude Agent Skills/CLAUDE.md, Context7, Codex remote tasks, claude-mem (developer-only), Headroom.
+- ENTEGRASYON: Model Router, OmniRoute candidate, Pinokio, Vercel, Supabase, provider/connector lifecycle.
+- ARAŞTIRMA: Agent Reach, LMArena/Chatbot Arena, Perplexity (optional), Whisper-WebUI.
+- VERİ: PostHog, Agent Reach, Gemma 4/Ollama, Headroom, model/tool evaluation telemetry.
+- ARŞİV: Gemma 4/Ollama, Agent Reach and archive extraction workflows.
+- TASARIM: Lovart, Figma, Canva, Seedance 2.5, Runway, Higgsfield, Stable Diffusion WebUI Forge, FluxGym, LivePortrait, CogStudio/CogVideo, Remotion, Motion for React.
+- ERMES: Higgsfield Marketing Studio, Runway, Seedance 2.5, Canva, Remotion/Motion, Lyria 3.5, Whisper-WebUI, Applio/Moshi experimental, Meta/Instagram when connected.
+- ÜRETİM: Seedance 2.5, FluxGym, local creative tools and production workflow controls.
+- UZAY: Higgsfield Scene Builder and approved 3D/spatial tools.
+- ÜRÜN: Figma, monday.com, Vercel delivery planning, Shopify adapter.
+- PAZAR: ERMES, Shopify adapter, monday.com.
+- MÜŞTERİ: ERMES, monday.com, PostHog.
+- RAPOR: PostHog, model/tool evaluation, audit and cost reporting.
+- GÜVENLİK: Model Router, policy gates, local runtime health, secrets and license/production gates.
+- DÜNYA: localization workflows through the canonical content layer and approved creative tools.
+
+### Production boundary
+
+Cataloged applications are not automatically connected. Connected applications are not automatically production-approved. Community/local tools require exact repository/version, health, license and adapter verification. External providers remain replaceable adapters; DİJİY remains the source of truth.
+
+### Program
+
+Detailed tool-selection, production lanes, 30-day implementation phases and operating cadence are defined in `docs/AI_APPLICATION_OPERATING_PROGRAM.md`.
