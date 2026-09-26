@@ -1,6 +1,6 @@
 # Knowledge Research Pipeline — Tasarım
 
-Durum: **Tasarım / ARAS incelemesi için.** Migration yok, production değişikliği
+Durum: **Tasarım. K0 kararları kayıtlı (bölüm 8); K1 başlamadı.** Migration yok, production değişikliği
 yok. Ekteki SQL yalnızca öneridir; `supabase/migrations/` altına onaydan sonra
 taşınır.
 Hazırlayan: KAYRA · İnceleme: ARAS · Karar: Fatma Gül
@@ -30,7 +30,7 @@ Hedef: bir görevin araştırma bağlamı **≤ 1.500 token** (bugün 10–15 bi
  Doğrulama                                  │
   • otomatik: şema, kaynak sayısı, tekrar (content_hash), çelişki kontrolü
   • kültürel iddia → ARŞİV ajanı + insan (direktif: kaynak doğrulanmadan kesinleşmez)
-  • status: draft → verified | rejected | superseded ─────────┘
+  • yaşam döngüsü: draft → verified → active → superseded → archived ──┘
 ```
 
 Yazma yolu tektir: **sunucu tarafı ingestion uç noktası** (Next.js route
@@ -50,37 +50,39 @@ Mevcut tablolar korunur:
 
 **Yeni:** `knowledge_findings`. Ajanların okuduğu tek birim.
 
-| Alan                                     | Tür           | Not                                                                              |
-| ---------------------------------------- | ------------- | -------------------------------------------------------------------------------- |
-| `id`, `organization_id`                  | uuid          | `organization_id` NULL = global bulgu (yalnızca `service_role` yazar, F5 kuralı) |
-| `project_id`, `task_id`                  | uuid          | Hangi görev için üretildi                                                        |
-| `question`                               | text ≤ 300    | Araştırılan soru                                                                 |
-| `claim`                                  | text ≤ 500    | **Tek cümlelik iddia**, ajanın okuyacağı kısım                                   |
-| `summary`                                | text ≤ 1.500  | İsteğe bağlı kısa açıklama                                                       |
-| `evidence`                               | jsonb         | `[{source_id, document_id, quote ≤ 300, url, accessed_at}]`, en az 1, en fazla 5 |
-| `confidence`                             | text          | `low`, `medium`, `high`                                                          |
-| `status`                                 | text          | `draft`, `verified`, `rejected`, `superseded`                                    |
-| `domain`                                 | text          | `culture`, `fabric`, `market`, `supplier`, `regulation`, `technical`…            |
-| `tags`                                   | text[]        | Filtre                                                                           |
-| `produced_by`                            | text          | Ajan anahtarı (`perplexity`, `deepseek`, `kayra`…)                               |
-| `produced_model`                         | text          | Üretimde kullanılan model (denetim için)                                         |
-| `verified_by_agent` / `verified_by_user` | text / uuid   | Kim doğruladı                                                                    |
-| `verified_at`, `valid_until`             | timestamptz   | Bayatlama; süresi dolan bulgu yeniden doğrulanır                                 |
-| `superseded_by`                          | uuid          | Yeni bulguya işaret eder                                                         |
-| `content_hash`                           | text          | `(question, claim)` normalize hash; tekrar engeli                                |
-| `token_estimate`                         | int           | Retrieval bütçesi için                                                           |
-| `embedding`                              | `vector(384)` | Mevcut `knowledge_chunks` ile aynı boyut ve model                                |
-| `created_at`, `updated_at`               | timestamptz   |                                                                                  |
+| Alan                                     | Tür           | Not                                                                                   |
+| ---------------------------------------- | ------------- | ------------------------------------------------------------------------------------- |
+| `id`, `organization_id`                  | uuid          | `organization_id` NULL = global bulgu (yalnızca `service_role` yazar, F5 kuralı)      |
+| `project_id`, `task_id`                  | uuid          | Hangi görev için üretildi                                                             |
+| `question`                               | text ≤ 300    | Araştırılan soru                                                                      |
+| `claim`                                  | text ≤ 500    | **Tek cümlelik iddia**, ajanın okuyacağı kısım                                        |
+| `summary`                                | text ≤ 1.500  | İsteğe bağlı kısa açıklama                                                            |
+| `evidence`                               | jsonb         | `[{source_id, document_id, quote ≤ 300, url, accessed_at}]`, en az 1, en fazla 5      |
+| `confidence`                             | text          | `low`, `medium`, `high`                                                               |
+| `finding_type`                           | text          | `source_fact`, `verified_finding`, `ai_inference` (bkz. K0 kararı 3)                  |
+| `status`                                 | text          | `draft` → `verified` → `active` → `superseded` → `archived` (bkz. K0 kararı 4)        |
+| `domain`                                 | text          | `culture`, `fabric`, `market`, `supplier`, `regulation`, `technical`…                 |
+| `tags`                                   | text[]        | Filtre                                                                                |
+| `produced_by`                            | text          | Ajan anahtarı (`perplexity`, `deepseek`, `kayra`…)                                    |
+| `produced_model`                         | text          | Üretimde kullanılan model (denetim için)                                              |
+| `verified_by_agent` / `verified_by_user` | text / uuid   | Kim doğruladı                                                                         |
+| `verified_at`, `review_due_at`           | timestamptz   | Yeniden doğrulama tarihi. Süresi gelince bulgu **silinmez**, yeniden incelemeye düşer |
+| `superseded_by`                          | uuid          | Yeni bulguya işaret eder                                                              |
+| `content_hash`                           | text          | `(question, claim)` normalize hash; tekrar engeli                                     |
+| `token_estimate`                         | int           | Retrieval bütçesi için                                                                |
+| `embedding`                              | `vector(384)` | Mevcut `knowledge_chunks` ile aynı boyut ve model                                     |
+| `created_at`, `updated_at`               | timestamptz   |                                                                                       |
 
 ## 4. Retrieval: kısa bağlam
 
 `public.retrieve_findings(query_embedding vector(384), p_org uuid, p_domain text,
 p_token_budget int default 1500, p_k int default 8)`
 
-- Yalnızca `status = 'verified'` ve `valid_until` geçmemiş bulgular.
+- Yalnızca `status = 'active'` bulgular. Her satır `finding_type` ile döner;
+  `ai_inference` her zaman etiketli gösterilir ve kaynak gerçeği gibi sunulmaz.
 - Benzerlik ve `confidence` ile sıralar; `token_estimate` toplamı bütçeyi
   aşınca durur.
-- Döner: `id, claim, confidence, domain, source_urls[], verified_at`. **Alıntı,
+- Döner: `id, finding_type, claim, confidence, domain, source_urls[], verified_at`. **Alıntı,
   özet ve doküman dönmez.** Ajan gerekirse tek bir bulgunun `evidence`'ını ayrıca ister.
 - `SECURITY INVOKER`: çağıranın RLS'i geçerli; kiracılar birbirinin bulgusunu göremez.
 
@@ -98,7 +100,7 @@ biçimi:
 | Konu             | Kural                                                                                                                                                                                               |
 | ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Yazma            | Yalnızca ingestion uç noktası (`service_role`). İstemci rolleri `draft` dahil yazamaz                                                                                                               |
-| Doğrulama        | `verified` durumuna geçiş: owner, admin, manager veya yetkili doğrulayıcı ajan (ARŞİV). `culture` alanında insan onayı zorunlu                                                                      |
+| Doğrulama        | `verified` ve `active` geçişleri Karar 3'teki politikaya göre. `culture` alanında insan onayı zorunlu                                                                                               |
 | Okuma            | Org bulguları: aktif üyeler (`is_org_member`). Global bulgular: tüm kayıtlı kullanıcılar                                                                                                            |
 | Viewer           | Salt okunur (ARAS kararı)                                                                                                                                                                           |
 | Prompt injection | Kaynak metni **veri**dir. `claim` ve `summary` talimat içeremez; ingestion, talimat kalıplarını ve HTML/Markdown bağlantılarını reddeder. Retrieval yalnızca alanları döndürür, ham metni döndürmez |
@@ -123,19 +125,107 @@ biçimi:
 | K3            | Perplexity/DeepSeek bağlantısı (anahtarlar kurucu onayıyla)                                      | Onay gerekir      |
 | K4            | Production'a migration (ayrı kurucu onayı)                                                       | Onay gerekir      |
 
-## 8. ARAS kararı gereken konular
+## 8. K0 kararları (ARAS, 23.09.2026)
 
-1. **Embedding modeli:** Mevcut `vector(384)` hangi modelle üretiliyor?
-   Bulgular aynı modeli kullanmalı. Karar yoksa önerim, sunucuda çalışan açık
-   bir 384 boyutlu model.
-2. **Ingestion nerede çalışsın:** Vercel (Next.js route handler) mı, Supabase
-   Edge Function mı? Öneri: Vercel. Tek dil ve mevcut testler; Edge Function
-   ek dağıtım yüzeyi getirir.
-3. **Otomatik doğrulama eşiği:** Kültür dışı alanlarda `high` güvenli ve
-   ≥ 2 bağımsız `primary` veya `official` kaynaklı bulgu otomatik `verified`
-   olabilir mi, yoksa her bulgu insan onayı mı ister?
-4. **Saklama süresi:** Varsayılan `valid_until` (öneri: pazar/tedarik 90 gün,
-   kültür/tarih süresiz, düzenleme 180 gün).
+K1 (taslak migration ve testler) ancak bu bölümdeki kayıt tamamlandıktan sonra
+başlar. `UNKNOWN` ve `DECISION REQUIRED` işaretli maddeler K1'i bloklamaz;
+ancak ilgili alanlar K1'de sabit bir değere bağlanmaz.
+
+### Karar 1: Embedding modeli → **UNKNOWN / not documented**
+
+Mevcut `knowledge_chunks.embedding` sütunu `vector(384)` tipinde, HNSW (cosine)
+indeksli. Model adı hiçbir kayıtta yok. 26.09.2026'da production'da salt okunur
+olarak şu kaynaklar kontrol edildi:
+
+| Kaynak                                                | Sonuç           |
+| ----------------------------------------------------- | --------------- |
+| `knowledge_chunks.embedding_model`                    | Tabloda 0 satır |
+| `embedding` sütun yorumu                              | Yok             |
+| `system_settings` (embed içeren anahtar veya değer)   | Yok             |
+| `ai_models` (embed içeren kayıt)                      | Yok             |
+| `knowledge_documents.metadata` (model/embed anahtarı) | Yok             |
+
+Sonuç: Model **tahmin edilmez**. 384 boyut yalnızca bir kısıttır, model kimliği değildir.
+
+- K1: `embedding` sütunu `vector(384)` kalır; `embedding_model text` sütunu
+  zorunlu tutulur. Her vektör, onu üreten modelle birlikte kaydedilir.
+- Retrieval yalnızca sorgu vektörüyle aynı `embedding_model` değerine sahip
+  satırları karşılaştırır. Farklı modellerin vektörleri asla karıştırılmaz.
+- **DECISION REQUIRED:** Kullanılacak embedding modeli ve boyutu. K2'den
+  (ingestion) önce seçilmeli.
+
+### Karar 2: Ingestion çalışma ortamı → **Öneri: Vercel (karar değil)**
+
+Production değişikliği yok. Seçenekler karşılaştırmalı olarak kayıtta tutulur:
+
+| Kriter                | Vercel (Next.js route handler / cron)                                                                                         | Supabase Edge Function                                                                              |
+| --------------------- | ----------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| Güvenlik sınırı       | Uygulamayla aynı kod tabanı. `service_role` anahtarı uygulamayla aynı projede durur; ayrı bir ortamda tutmak ayrıca kurulmalı | Veritabanına yakın ve ayrı dağıtım. `service_role` Supabase içinde kalır, uygulama projesine girmez |
+| Secret yönetimi       | Vercel env (Production/Preview ayrımı, "Sensitive"). Perplexity/DeepSeek anahtarları burada                                   | Supabase Edge secrets / Vault. Anahtarlar veritabanı tarafında toplanır                             |
+| Timeout               | Plana ve yapılandırmaya bağlı. **DOĞRULANACAK**                                                                               | Plana bağlı çalışma süresi sınırı var. **DOĞRULANACAK**                                             |
+| Uzun araştırma işleri | Her iki durumda da senkron istek yerine iş kuyruğu gerekir (`tasks` / `workflow_runs` + parça parça işleme)                   | Aynı                                                                                                |
+| Maliyet               | Plan ve kullanıma bağlı. Ticari kullanım için Hobby plan kısıtı **DOĞRULANACAK**                                              | Free planda çağrı kotası var, üstü ücretli. **DOĞRULANACAK**                                        |
+| Bakım                 | Tek dil (TypeScript/Node), mevcut Vitest ve CI yeniden kullanılır                                                             | Deno çalışma ortamı, ayrı dağıtım hattı ve test düzeni                                              |
+| Test edilebilirlik    | Mevcut test altyapısıyla yerelde test edilir                                                                                  | Supabase CLI ile yerel çalıştırma gerekir                                                           |
+
+- Öneri: Vercel. Tek kod tabanı ve mevcut test/CI yeniden kullanılır.
+  `service_role` anahtarı yalnızca ingestion sunucu kodunda kullanılır
+  (`server-only`).
+- Edge Function, secret'ların uygulama projesine hiç girmemesi istenirse
+  güçlü alternatif olarak açık kalır.
+- **DECISION REQUIRED:** Nihai seçim K2'den önce. "DOĞRULANACAK" satırları,
+  güncel resmi Vercel ve Supabase belgelerinden doğrulanmadan karar verilmez.
+
+### Karar 3: Doğrulama politikası → **Tür + kaynak güvenilirliği + çapraz doğrulama**
+
+Tek bir yüzde veya puan eşiği yok. Her bulgunun türü açıkça ayrılır:
+
+| Tür                | Tanım                                                      | Kanıt şartı                                                                                                                              | `verified` için                                          | `active` için                                                                                  |
+| ------------------ | ---------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| `source_fact`      | Bir kaynakta açıkça yazan bilgi; model yorumu yok          | ≥ 1 alıntı. Alıntı kaynakta birebir bulunmalı (otomatik kontrol). Kaynak `authority_level` ∈ {primary, official, academic, professional} | Otomatik alıntı kontrolü + doğrulayıcı ajan (ARŞİV/ARAS) | Doğrulayıcı onayı. `culture`, `regulation` alanlarında insan onayı                             |
+| `verified_finding` | Birden çok kaynaktan sentezlenmiş iddia                    | ≥ 2 **bağımsız** kaynak (farklı yayıncı), en az biri primary/official/academic. Çelişen bir `active` bulgu yok                           | Doğrulayıcı ajan + çapraz kontrol kaydı                  | İnsan onayı (owner/admin/manager); `culture` alanında zorunlu                                  |
+| `ai_inference`     | Modelin çıkarımı veya tahmini; doğrudan kaynak desteği yok | Dayandığı bulgulara referans (varsa)                                                                                                     | **Otomatik doğrulanmaz**                                 | Yalnızca açık insan onayıyla, her zaman "AI çıkarımı" etiketiyle. Kaynak gerçeği yerine geçmez |
+
+Ek kurallar:
+
+- `authority_level = 'secondary' | 'community' | 'unknown'` kaynaklar tek
+  başına `source_fact` veya `verified_finding` desteklemez; ancak ek kanıt
+  olarak listelenebilir.
+- Bir `active` bulguyla çelişen yeni bulgu otomatik `active` olamaz; ikisi
+  birlikte incelemeye düşer.
+- Tür, doğrulama sırasında **düşürülebilir**, yükseltilemez. Örneğin yeterli
+  kaynağı olmayan `verified_finding`, `ai_inference`'a çevrilir.
+- Kültür DNA direktifi: `culture` alanında hiçbir bulgu insan onayı olmadan
+  `active` olmaz.
+- **DECISION REQUIRED:** Hangi `domain` değerlerinde insan onayı zorunlu?
+  Öneri: `culture`, `regulation`, `financial`.
+
+### Karar 4: Saklama ve yaşam döngüsü → **Fiziksel silme yok**
+
+```
+draft ──► verified ──► active ──► superseded ──► archived
+  │           │
+  └──► rejected (terminal; kayıt korunur)
+```
+
+| Durum        | Anlamı                                          | Retrieval |
+| ------------ | ----------------------------------------------- | --------- |
+| `draft`      | Ajan üretti, doğrulanmadı                       | Hayır     |
+| `verified`   | Politika kontrollerinden geçti, yayına alınmadı | Hayır     |
+| `active`     | Kullanımda                                      | **Evet**  |
+| `superseded` | Yeni bir bulgu yerini aldı (`superseded_by`)    | Hayır     |
+| `archived`   | Kullanımdan kaldırıldı, kayıt korunuyor         | Hayır     |
+
+- Otomatik fiziksel silme (`DELETE`) **yok**. İstemci rollerine silme politikası
+  verilmez.
+- `review_due_at` geldiğinde bulgu silinmez veya kendiliğinden arşivlenmez;
+  yeniden inceleme kuyruğuna düşer.
+- Fiziksel silme ayrı, yüksek riskli bir işlemdir. Yalnızca kurucu onaylı
+  `human_approval_requests` ile yapılır (owner-only onay türü olarak).
+- **DECISION REQUIRED:** `rejected` durumu ARAS'ın listesinde yok. Doğrulamadan
+  geçemeyen bulgular için terminal durum olarak öneriliyor; alternatifi,
+  doğrudan `archived` kullanmak.
+- **DECISION REQUIRED:** Varsayılan `review_due_at` süreleri alan bazında.
 
 ## Ek A — Önerilen SQL (taslak, uygulanmadı)
 
@@ -152,8 +242,10 @@ create table public.knowledge_findings (
     check (jsonb_typeof(evidence) = 'array'
            and jsonb_array_length(evidence) between 1 and 5),
   confidence text not null check (confidence in ('low', 'medium', 'high')),
+  finding_type text not null
+    check (finding_type in ('source_fact', 'verified_finding', 'ai_inference')),
   status text not null default 'draft'
-    check (status in ('draft', 'verified', 'rejected', 'superseded')),
+    check (status in ('draft', 'verified', 'active', 'superseded', 'archived', 'rejected')),
   domain text not null,
   tags text[] not null default '{}',
   produced_by text not null,
@@ -161,11 +253,13 @@ create table public.knowledge_findings (
   verified_by_agent text,
   verified_by_user uuid references auth.users(id) on delete set null,
   verified_at timestamptz,
-  valid_until timestamptz,
+  review_due_at timestamptz,
   superseded_by uuid references public.knowledge_findings(id),
   content_hash text not null,
   token_estimate int not null check (token_estimate between 1 and 400),
   embedding extensions.vector(384),
+  embedding_model text,
+  check ((embedding is null) = (embedding_model is null)),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   unique (organization_id, content_hash)
@@ -173,7 +267,7 @@ create table public.knowledge_findings (
 
 create index knowledge_findings_embedding_idx on public.knowledge_findings
   using hnsw (embedding extensions.vector_cosine_ops)
-  where status = 'verified';
+  where status = 'active';
 create index knowledge_findings_org_domain_idx on public.knowledge_findings
   (organization_id, domain, status);
 
@@ -193,6 +287,6 @@ create policy knowledge_findings_verify on public.knowledge_findings
 ```
 
 K1'de testleriyle birlikte yazılacaklar: `retrieve_findings()`; güncellemede
-yalnızca `status`/`verified_*`/`valid_until`/`superseded_by` alanlarının
+yalnızca `status`/`finding_type` (düşürme)/`verified_*`/`review_due_at`/`superseded_by` alanlarının
 değişmesine izin veren trigger (UPDATE politikası tek başına sütunları
 kısıtlamaz); `culture` alanında insan onayı zorunluluğu.
